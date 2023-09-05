@@ -12,6 +12,8 @@ public class Game : MonoBehaviour
     float moveSpeed = 5f;
     [SerializeField]
     float scrollSpeed = 100f;
+    [SerializeField]
+    int iterations;
 
     Camera cam;
 
@@ -82,7 +84,7 @@ public class Game : MonoBehaviour
         //cam.transform.position = Vector3.Lerp(cam.transform.position, new Vector3(player.body.position.x, player.body.position.y, -10), 0.05f);
         cam.orthographicSize += Input.mouseScrollDelta.y * Time.deltaTime * scrollSpeed;
 
-        world.Step(Time.deltaTime);
+        world.Step(Time.deltaTime, iterations);
     }
 
    

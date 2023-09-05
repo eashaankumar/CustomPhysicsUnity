@@ -153,6 +153,7 @@ MonoBehaviour:
   squarePrefab: {fileID: 7060046076133821630, guid: 3dfb881c09c7cbd438dbd064f814f4d4, type: 3}
   moveSpeed: 5
   scrollSpeed: 1
+  iterations: 10
 --- !u!4 &205956709
 Transform:
   m_ObjectHideFlags: 0

@@ -12,11 +12,13 @@ public sealed class World
 
     HashSet<Shape> shapes;
     private Vector2 gravity;
+    private List<CollisionManifold> contactList;
 
     public World()
     {
         gravity = Vector2.down * 9.81f;
         shapes = new HashSet<Shape>();
+        contactList = new List<CollisionManifold>();
     }
 
     public void AddBody(Shape body)
@@ -29,11 +31,15 @@ public sealed class World
         return shapes.Remove(body);
     }
 
-    public void Step(float dt)
+    public void Step(float dt, int iterations)
     {
         ResolveNullShapes();
-        StepBodies(dt);
-        ResolveCollisions();
+        float dtIter = dt / iterations;
+        for (int i = 0; i < iterations; i++)
+        {
+            ResolveCollisions();
+            StepBodies(dtIter);
+        }
     }
 
     void StepBodies(float dt)
@@ -68,6 +74,7 @@ public sealed class World
                 
                 if (Collide(a, b, out normal, out depth))
                 {
+                  
                     if (a.body.isStatic)
                     {
                         b.body.Move(normal * depth * 1f);
@@ -82,7 +89,8 @@ public sealed class World
                         b.body.Move(normal * depth * 0.5f); 
                     }
 
-                    ResolveCollision(a, b, normal, depth);
+                    CollisionManifold manifold = new CollisionManifold(a, b, normal, depth, new Vector2[] { });
+                    this.contactList.Add(manifold);
 
                     a.OnCollision(b);
                     b.OnCollision(a);
@@ -90,18 +98,23 @@ public sealed class World
             }
 
         }
+
+        for(int i = 0; i < this.contactList.Count; i++)
+        {
+            ResolveCollision(this.contactList[i]);
+        }
     }
 
-    void ResolveCollision(Shape a, Shape b, Vector2 normal, float depth)
+    void ResolveCollision(CollisionManifold man)
     {
-        Vector2 relVel = b.body.linearVelocity - a.body.linearVelocity;
-        float restitution = Mathf.Min(a.body.restitution, b.body.restitution);
-        float impulseMag = -(1 + restitution) * Vector2.Dot(relVel, normal);
-        impulseMag /= (a.body.InvMass + b.body.InvMass);
+        Vector2 relVel = man.b.body.linearVelocity - man.a.body.linearVelocity;
+        float restitution = Mathf.Min(man.a.body.restitution, man.b.body.restitution);
+        float impulseMag = -(1 + restitution) * Vector2.Dot(relVel, man.normal);
+        impulseMag /= (man.a.body.InvMass + man.b.body.InvMass);
         //disregard rotation and friction
 
-        a.body.linearVelocity -= impulseMag * a.body.InvMass * normal;
-        b.body.linearVelocity += impulseMag * b.body.InvMass * normal;
+        man.a.body.linearVelocity -= impulseMag * man.a.body.InvMass * man.normal;
+        man.b.body.linearVelocity += impulseMag * man.b.body.InvMass * man.normal;
     }
 
     bool Collide(Shape a, Shape b, out Vector2 normal, out float depth)

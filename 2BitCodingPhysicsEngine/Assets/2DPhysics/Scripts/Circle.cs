@@ -29,7 +29,7 @@ public class Circle : Shape
             Destroy(gameObject);
         }
 
-        body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
+        //body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
 
         transform.localScale = Vector2.one * body.radius;
     }
@@ -39,6 +39,14 @@ public class Circle : Shape
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         
+    }
+
+    private void OnDrawGizmos()
+    {
+        AABB aabb = body.GetAABB();
+
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireCube(body.position, aabb.max - aabb.min);
     }
 
     private void Update()

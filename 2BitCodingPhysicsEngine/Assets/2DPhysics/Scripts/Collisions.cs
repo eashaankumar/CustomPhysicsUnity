@@ -209,3 +209,21 @@ public struct BoxVertices
 
     }
 }
+
+public readonly struct CollisionManifold
+{
+    public readonly Shape a;
+    public readonly Shape b;
+    public readonly Vector2 normal;
+    public readonly float depth;
+    public readonly Vector2[] contacts;
+
+    public CollisionManifold(Shape _a, Shape _b, Vector2 _n, float _d, Vector2[] _cs)
+    {
+        this.a = _a;
+        this.b = _b;
+        this.normal = _n;
+        this.depth = _d;
+        this.contacts = _cs;
+    }
+}
