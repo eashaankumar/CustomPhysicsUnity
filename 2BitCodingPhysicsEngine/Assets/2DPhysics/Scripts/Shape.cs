@@ -6,4 +6,5 @@ public abstract class Shape : MonoBehaviour
 {
     public Body body;
 
+    public abstract void OnCollision(Shape other);
 }

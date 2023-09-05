@@ -4,6 +4,11 @@ using UnityEngine;
 
 public static class Collisions 
 {
+
+    struct MinMax
+    {
+        public float min, max;
+    }
     public static bool IntersetCircles(Vector2 centerA, float radiusA, Vector2 centerB, float radiusB, out Vector2 normal, out float depth)
     {
         normal = Vector2.zero;
@@ -23,22 +28,24 @@ public static class Collisions
         return true;
     }
 
-    /*public static bool IntersectPolygons(Vector2[] verticesA, Vector2[] verticesB, Vector2[] normals, out Vector2 normal, out float depth)
+    public static bool IntersectPolygons(Vector2[] verticesA, Vector2[] verticesB, Vector2[] normals, out Vector2 normal, out float depth)
     {
+        Debug.Assert(verticesA.Length + verticesB.Length == normals.Length);
         normal = Vector2.zero;
         depth = 0;
         foreach(Vector2 n in normals)
         {
             n.Normalize();
-            Vector2 minMaxA = MinMax(n, verticesA);
-            Vector2 minMaxB = MinMax(n, verticesB);
-            if (minMaxA.x > minMaxB.y || minMaxB.x > minMaxA.y)
+            MinMax minMaxA = Collisions.ProjectVerticesMinMax(n, verticesA);
+            MinMax minMaxB = Collisions.ProjectVerticesMinMax(n, verticesB);
+            if (minMaxA.min >= minMaxB.max || minMaxB.min > minMaxA.max)
             {
                 // serparation
                 return false;
             }
         }
-    }*/
+        return true;
+    }
 
     public static Vector2[] GetNormals(Vector2[] vertices)
     {
@@ -54,17 +61,16 @@ public static class Collisions
         return normals;
     }
 
-    private static Vector2 MinMax(Vector2 normal, Vector2[] vertices)
+    private static MinMax ProjectVerticesMinMax(Vector2 normal, Vector2[] vertices)
     {
-        Vector2 minMaxA = new Vector2(float.MaxValue, float.MinValue);
+        MinMax minMax = new MinMax { min = float.MaxValue, max = float.MinValue };
         foreach (Vector2 p in vertices)
         {
-            Vector2 projected = Vector3.Project(p, normal);
-            float t = projected.magnitude;
-            if (t < minMaxA.x) minMaxA.x = t;
-            else if (t > minMaxA.y) minMaxA.y = t;
+            float proj = Vector2.Dot(p, normal);
+            if (proj < minMax.min) minMax.min = proj;
+            if (proj > minMax.max) minMax.max = proj;
         }
-        return minMaxA;
+        return minMax;
     }
 }
 

@@ -67,10 +67,43 @@ public class Game : MonoBehaviour
                     {
                         a.body.Move(-normal * depth * 0.5f);
                         b.body.Move(normal * depth * 0.5f);
+                        a.OnCollision(b);
+                        b.OnCollision(a);
+                    }
+                }
+                else if (IsPolygon(a.body.type) && IsPolygon(b.body.type))
+                {
+                    Vector2 normal;
+                    float depth;
+                    BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
+                    BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
+                    Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
+                    Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
+                    Vector2[] normalsA = Collisions.GetNormals(verticesA);
+                    Vector2[] normalsB = Collisions.GetNormals(verticesB);
+
+                    Vector2[] z = new Vector2[normalsA.Length + normalsB.Length];
+                    normalsA.CopyTo(z, 0);
+                    normalsB.CopyTo(z, normalsA.Length);
+
+                    if (Collisions.IntersectPolygons(verticesA, verticesB, z, out normal, out depth))
+                    {
+                        a.OnCollision(b);
+                        b.OnCollision(a);
                     }
                 }
             }
 
         }
+    }
+
+    Vector2[] GetCounterClockwiseVertices(BoxVertices vertices)
+    {
+        return new Vector2[] { vertices.topLeft, vertices.topRight, vertices.bottomRight, vertices.bottomLeft };
+    }
+
+    bool IsPolygon(ShapeType type)
+    {
+        return type == ShapeType.Box;
     }
 }

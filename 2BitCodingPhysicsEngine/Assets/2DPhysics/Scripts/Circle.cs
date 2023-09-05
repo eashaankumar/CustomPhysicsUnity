@@ -8,6 +8,12 @@ public class Circle : Shape
     bool isStatic;
 
     SpriteRenderer spriteRenderer;
+
+    public override void OnCollision(Shape other)
+    {
+        
+    }
+
     // Start is called before the first frame update
     void Awake()
     {
