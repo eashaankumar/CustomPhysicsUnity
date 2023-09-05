@@ -10,26 +10,11 @@ public class Square : Shape
     int isColliding;
 
     SpriteRenderer spriteRenderer;
-    Color reg;
+    public Color reg;
     // Start is called before the first frame update
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        reg = Color.HSVToRGB(Random.value, Random.value, Random.Range(0.5f, 1.0f));
-        spriteRenderer.color = reg;
-
-        Vector2 size = new Vector2(Random.Range(0.2f, 1.0f), Random.Range(0.2f, 1.0f)) * 1;
-        float density = Random.Range(0.5f, 10f);
-        float restitution = Random.value;
-        string error = "";
-
-        if(!Body.CreateBoxBody(size, transform.position, density, isStatic, restitution, out body, out error))
-        {
-            Debug.LogError(error);
-            Destroy(gameObject);
-        }
-        transform.localScale = body.size/2;
-        body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
     }
 
     private void Update()
@@ -80,5 +65,24 @@ public class Square : Shape
     public override void OnCollision(Shape other)
     {
         isColliding++;
+    }
+
+    public override void RandomGenerate()
+    {
+        reg = Color.HSVToRGB(Random.value, Random.value, Random.Range(0.5f, 1.0f));
+        spriteRenderer.color = reg;
+
+        Vector2 size = new Vector2(Random.Range(0.2f, 1.0f), Random.Range(0.2f, 1.0f)) * 1;
+        float density = Random.Range(0.5f, 10f);
+        float restitution = Random.value;
+        string error = "";
+
+        if (!Body.CreateBoxBody(size, transform.position, density, isStatic, restitution, out body, out error))
+        {
+            Debug.LogError(error);
+            Destroy(gameObject);
+        }
+        transform.localScale = body.size / 2;
+        body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
     }
 }

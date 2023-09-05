@@ -14,12 +14,10 @@ public class Circle : Shape
         
     }
 
-    // Start is called before the first frame update
-    void Awake()
+    public override void RandomGenerate()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
         spriteRenderer.color = Color.HSVToRGB(Random.value, Random.value, Random.Range(0.5f, 1.0f));
-        
+
         float radius = Random.Range(0.2f, 1.0f) * 1;
         float density = Random.Range(0.5f, 10f);
         float restitution = Random.value;
@@ -34,6 +32,13 @@ public class Circle : Shape
         body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
 
         transform.localScale = Vector2.one * body.radius;
+    }
+
+    // Start is called before the first frame update
+    void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        
     }
 
     private void Update()

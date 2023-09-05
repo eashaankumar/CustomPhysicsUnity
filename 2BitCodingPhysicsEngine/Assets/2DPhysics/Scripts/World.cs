@@ -29,25 +29,24 @@ public sealed class World
         return shapes.Remove(body);
     }
 
-    public void Step(float time)
+    public void Step(float dt)
     {
         ResolveNullShapes();
+        StepBodies(dt);
         ResolveCollisions();
-        foreach (Shape shape in shapes)
-        {
+    }
 
+    void StepBodies(float dt)
+    {
+        foreach(Shape body in shapes)
+        {
+            body.body.Step(dt);
         }
     }
 
     void ResolveNullShapes()
     {
         shapes.RemoveWhere(s => s == null);
-        /*for (int i = shapes.Count - 1; i >= 0; i--)
-        {
-            Shape shape = shapes[i];
-            if (shape == null) shapes.RemoveAt(i);
-
-        }*/
     }
 
     void ResolveCollisions()
@@ -55,79 +54,82 @@ public sealed class World
         Shape[] shapesTemp = new Shape[shapes.Count];
         shapes.CopyTo(shapesTemp);
 
+        Vector2 normal;
+        float depth;
+
         for (int i = 0; i < shapesTemp.Length - 1; i++)
         {
             Shape a = shapesTemp[i];
             for (int j = i + 1; j < shapesTemp.Length; j++)
             {
                 Shape b = shapesTemp[j];
-                if (a.body.type == ShapeType.Circle && b.body.type == ShapeType.Circle)
-                {
-                    Vector2 normal;
-                    float depth;
-                    if (Collisions.IntersetCircles(a.body.position, a.body.radius, b.body.position, b.body.radius, out normal, out depth))
-                    {
-                        a.body.Move(-normal * depth * 0.5f);
-                        b.body.Move(normal * depth * 0.5f);
-                        a.OnCollision(b);
-                        b.OnCollision(a);
-                    }
-                }
-                else if (IsPolygon(a.body.type) && IsPolygon(b.body.type))
-                {
-                    Vector2 normal;
-                    float depth;
-                    BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
-                    BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
-                    Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
-                    Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
-                    Vector2[] normalsA = Collisions.GetNormals(verticesA);
-                    Vector2[] normalsB = Collisions.GetNormals(verticesB);
+                Collide(a, b, out normal, out depth);
 
-                    Vector2[] z = new Vector2[normalsA.Length + normalsB.Length];
-                    normalsA.CopyTo(z, 0);
-                    normalsB.CopyTo(z, normalsA.Length);
-
-                    if (Collisions.IntersectPolygons(verticesA, verticesB, z, out normal, out depth))
-                    {
-                        a.body.Move(-normal * depth * 0.5f);
-                        b.body.Move(normal * depth * 0.5f);
-                        a.OnCollision(b);
-                        b.OnCollision(a);
-                    }
-                }
-                else if (IsPolygon(a.body.type) && b.body.type == ShapeType.Circle)
-                {
-                    Vector2 normal;
-                    float depth;
-                    BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
-                    Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
-                    Vector2[] normalsA = Collisions.GetNormals(verticesA);
-                    if (Collisions.IntersectCirclePolygon(b.body.position, b.body.radius, verticesA, normalsA, out normal, out depth))
-                    {
-                        a.body.Move(-normal * depth * 0.5f);
-                        b.body.Move(normal * depth * 0.5f);
-                        a.OnCollision(b);
-                        b.OnCollision(a);
-                    }
-                }
-                else if (IsPolygon(b.body.type) && a.body.type == ShapeType.Circle)
-                {
-                    Vector2 normal;
-                    float depth;
-                    BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
-                    Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
-                    Vector2[] normalsB = Collisions.GetNormals(verticesB);
-                    if (Collisions.IntersectCirclePolygon(a.body.position, a.body.radius, verticesB, normalsB, out normal, out depth))
-                    {
-                        b.body.Move(-normal * depth * 0.5f);
-                        a.body.Move(normal * depth * 0.5f);
-                        b.OnCollision(a);
-                        a.OnCollision(b);
-                    }
-                }
             }
 
+        }
+    }
+
+    void Collide(Shape a, Shape b, out Vector2 normal, out float depth)
+    {
+        depth = 0;
+        normal = Vector2.zero;
+        if (a.body.type == ShapeType.Circle && b.body.type == ShapeType.Circle)
+        {
+            if (Collisions.IntersetCircles(a.body.position, a.body.radius, b.body.position, b.body.radius, out normal, out depth))
+            {
+                a.body.Move(-normal * depth * 0.5f);
+                b.body.Move(normal * depth * 0.5f);
+                a.OnCollision(b);
+                b.OnCollision(a);
+            }
+        }
+        else if (IsPolygon(a.body.type) && IsPolygon(b.body.type))
+        {
+            BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
+            BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
+            Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
+            Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
+            Vector2[] normalsA = Collisions.GetNormals(verticesA);
+            Vector2[] normalsB = Collisions.GetNormals(verticesB);
+
+            Vector2[] z = new Vector2[normalsA.Length + normalsB.Length];
+            normalsA.CopyTo(z, 0);
+            normalsB.CopyTo(z, normalsA.Length);
+
+            if (Collisions.IntersectPolygons(verticesA, verticesB, z, out normal, out depth))
+            {
+                a.body.Move(-normal * depth * 0.5f);
+                b.body.Move(normal * depth * 0.5f);
+                a.OnCollision(b);
+                b.OnCollision(a);
+            }
+        }
+        else if (IsPolygon(a.body.type) && b.body.type == ShapeType.Circle)
+        {
+            BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
+            Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
+            Vector2[] normalsA = Collisions.GetNormals(verticesA);
+            if (Collisions.IntersectCirclePolygon(b.body.position, b.body.radius, verticesA, normalsA, out normal, out depth))
+            {
+                a.body.Move(-normal * depth * 0.5f);
+                b.body.Move(normal * depth * 0.5f);
+                a.OnCollision(b);
+                b.OnCollision(a);
+            }
+        }
+        else if (IsPolygon(b.body.type) && a.body.type == ShapeType.Circle)
+        {
+            BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
+            Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
+            Vector2[] normalsB = Collisions.GetNormals(verticesB);
+            if (Collisions.IntersectCirclePolygon(a.body.position, a.body.radius, verticesB, normalsB, out normal, out depth))
+            {
+                a.body.Move(normal * depth * 0.5f);
+                b.body.Move(-normal * depth * 0.5f);
+                a.OnCollision(b);
+                b.OnCollision(a);
+            }
         }
     }
 

@@ -35,6 +35,12 @@ public struct Body
         this.position = pos;
     }
 
+    public void Step(float dt)
+    {
+        this.position += this.linearVelocity * dt;
+        this.rotation *= Quaternion.AngleAxis(rotationalVelocity * dt, Vector3.forward);
+    }
+
     public static bool CreateCircleBody(float _radius, Vector2 _position, float _density, bool _isStatic, float _restitution, out Body body, out string error)
     {
         body = new Body { };
