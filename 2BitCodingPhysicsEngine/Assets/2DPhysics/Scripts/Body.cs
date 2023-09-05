@@ -180,7 +180,7 @@ public struct Body
             float minY = Mathf.Min(yVerts);
             float maxY = Mathf.Max(yVerts);
 
-            aabb = new AABB(new Vector2(minX, minY), new Vector2(minY, maxY));  
+            aabb = new AABB(new Vector2(minX, minY), new Vector2(maxX, maxY));  
         }
         else if (this.type == ShapeType.Circle)
         {

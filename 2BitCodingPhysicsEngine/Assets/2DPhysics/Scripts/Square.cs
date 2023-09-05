@@ -49,6 +49,11 @@ public class Square : Shape
 
 
         DrawNormals(new Vector2[] { vertices.topLeft, vertices.topRight, vertices.bottomRight, vertices.bottomLeft });
+
+        AABB aabb = body.GetAABB();
+
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireCube(body.position, aabb.max - aabb.min);
     }
 
     void DrawNormals(Vector2[] verts)
@@ -83,6 +88,6 @@ public class Square : Shape
             Destroy(gameObject);
         }
         transform.localScale = body.size / 2;
-        //body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
+        body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
     }
 }
