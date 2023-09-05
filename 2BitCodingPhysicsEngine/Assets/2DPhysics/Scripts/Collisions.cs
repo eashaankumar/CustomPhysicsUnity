@@ -9,6 +9,53 @@ public static class Collisions
     {
         public float min, max;
     }
+
+    public static bool IntersectCirclePolygon(Vector2 center, float radius, Vector2[] vertices, Vector2[] normals, out Vector2 normal, out float depth)
+    {
+        Debug.Assert(vertices.Length == normals.Length);
+        normal = Vector2.zero;
+        depth = float.MaxValue;
+
+        int cpIndex = FindClosestPointOnPolygon(center, vertices);
+        Vector2 cp = vertices[cpIndex];
+        Vector2 cpAxis = (cp - center).normalized;
+
+        for (int i = 0; i < normals.Length + 1; i++) // +1 for cp axis
+        {
+            Vector2 n = Vector2.zero;
+            if (i < normals.Length) n = normals[i];
+            else n = cpAxis;
+            MinMax minMaxA = Collisions.ProjectVerticesMinMax(n, vertices);
+            MinMax minMaxB = Collisions.ProjectCircle(center, radius, n);
+
+            if (minMaxA.min >= minMaxB.max || minMaxB.min > minMaxA.max)
+            {
+                // serparation
+                return false;
+            }
+            float axisDepth = Mathf.Min(minMaxB.max - minMaxA.min, minMaxA.max - minMaxB.min);
+            if (axisDepth < depth)
+            {
+                depth = axisDepth;
+                normal = n;
+            }
+        }
+
+        depth /= normal.magnitude;
+        normal = normal.normalized;
+
+        Vector2 centerA = GeometricCenter(vertices);
+        Vector2 centerB = center;
+
+        Vector2 direction = centerB - centerA;
+        if (Vector2.Dot(direction, normal) < 0)
+        {
+            normal = -normal;
+        }
+
+        return true;
+    }
+
     public static bool IntersetCircles(Vector2 centerA, float radiusA, Vector2 centerB, float radiusB, out Vector2 normal, out float depth)
     {
         normal = Vector2.zero;
@@ -28,12 +75,12 @@ public static class Collisions
         return true;
     }
 
-    public static bool IntersectPolygons(Vector2[] verticesA, Vector2[] verticesB, Vector2[] normals, out Vector2 normal, out float depth)
+    public static bool IntersectPolygons(Vector2[] verticesA, Vector2[] verticesB, Vector2[] normalsAB, out Vector2 normal, out float depth)
     {
-        Debug.Assert(verticesA.Length + verticesB.Length == normals.Length);
+        Debug.Assert(verticesA.Length + verticesB.Length == normalsAB.Length);
         normal = Vector2.zero;
         depth = float.MaxValue;
-        foreach (Vector2 n in normals)
+        foreach (Vector2 n in normalsAB)
         {
             //n.Normalize();
             MinMax minMaxA = Collisions.ProjectVerticesMinMax(n, verticesA);
@@ -91,6 +138,27 @@ public static class Collisions
         return normals;
     }
 
+    private static MinMax ProjectCircle(Vector2 center, float radius, Vector2 normal)
+    {
+        MinMax ans = new MinMax();
+        normal.Normalize();
+        Vector2 dirAndRad = normal * radius;
+        Vector2 p1 = center + dirAndRad;
+        Vector2 p2 = center - dirAndRad;
+
+        ans.min = Vector2.Dot(p1, normal);
+        ans.max = Vector2.Dot(p2, normal);
+
+        if (ans.min > ans.max)
+        {
+            float t = ans.min;
+            ans.min = ans.max;
+            ans.max = t;
+        }
+
+        return ans;
+    }
+
     private static MinMax ProjectVerticesMinMax(Vector2 normal, Vector2[] vertices)
     {
         MinMax minMax = new MinMax { min = float.MaxValue, max = float.MinValue };
@@ -101,6 +169,25 @@ public static class Collisions
             if (proj > minMax.max) minMax.max = proj;
         }
         return minMax;
+    }
+
+    private static int FindClosestPointOnPolygon(Vector2 center, Vector2[] vertices)
+    {
+        int result = -1;
+        float minSqDistance = float.MaxValue;
+
+        for(int i = 0; i < vertices.Length; i++)
+        {
+            Vector2 v = vertices[i];
+            float sqDistance = Vector2.SqrMagnitude(v - center);
+            if (sqDistance < minSqDistance)
+            {
+                minSqDistance = sqDistance;
+                result = i;
+            }
+        }
+
+        return result;
     }
 }
 

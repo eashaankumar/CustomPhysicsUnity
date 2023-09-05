@@ -94,6 +94,36 @@ public class Game : MonoBehaviour
                         b.OnCollision(a);
                     }
                 }
+                else if(IsPolygon(a.body.type) && b.body.type == ShapeType.Circle)
+                {
+                    Vector2 normal;
+                    float depth;
+                    BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
+                    Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
+                    Vector2[] normalsA = Collisions.GetNormals(verticesA);
+                    if (Collisions.IntersectCirclePolygon(b.body.position, b.body.radius, verticesA, normalsA, out normal, out depth))
+                    {
+                        a.body.Move(-normal * depth * 0.5f);
+                        b.body.Move(normal * depth * 0.5f);
+                        a.OnCollision(b);
+                        b.OnCollision(a);
+                    }
+                }
+                else if (IsPolygon(b.body.type) && a.body.type == ShapeType.Circle)
+                {
+                    Vector2 normal;
+                    float depth;
+                    BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
+                    Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
+                    Vector2[] normalsB = Collisions.GetNormals(verticesB);
+                    if (Collisions.IntersectCirclePolygon(a.body.position, a.body.radius, verticesB, normalsB, out normal, out depth))
+                    {
+                        b.body.Move(-normal * depth * 0.5f);
+                        a.body.Move(normal * depth * 0.5f);
+                        b.OnCollision(a);
+                        a.OnCollision(b);
+                    }
+                }
             }
 
         }
