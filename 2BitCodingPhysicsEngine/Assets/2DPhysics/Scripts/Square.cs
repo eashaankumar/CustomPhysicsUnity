@@ -32,10 +32,13 @@ public class Square : Shape
     {
         transform.position = body.position;
         transform.localScale = body.size/2;
+
+        body.rotation *= Quaternion.AngleAxis(90 * Time.deltaTime, Vector3.forward);
+
         transform.rotation = body.rotation;
     }
 
-    /*private void OnDrawGizmos()
+    private void OnDrawGizmos()
     {
         BoxVertices vertices = new BoxVertices(body.position, body.size, body.rotation);
 
@@ -45,5 +48,18 @@ public class Square : Shape
         Gizmos.DrawSphere(vertices.bottomLeft, body.size.magnitude / 10 + 6e-2f);
         Gizmos.DrawSphere(vertices.bottomRight, body.size.magnitude / 10 + 9e-2f);
 
-    }*/
+
+        DrawNormals(new Vector2[] { vertices.topLeft, vertices.topRight, vertices.bottomRight, vertices.bottomLeft });
+    }
+
+    void DrawNormals(Vector2[] verts)
+    {
+        Vector2[] normals = Collisions.GetNormals(verts);
+        Debug.Assert(normals.Length == verts.Length);
+        for(int i = 0; i < normals.Length; i++)
+        {
+            Gizmos.color = Color.Lerp(Color.yellow, Color.white, (float)i / verts.Length);
+            Gizmos.DrawRay((verts[i] + verts[(i+1) % verts.Length]) / 2, normals[i]);
+        }
+    }
 }
