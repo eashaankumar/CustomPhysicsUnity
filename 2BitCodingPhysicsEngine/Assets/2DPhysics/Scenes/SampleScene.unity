@@ -152,7 +152,7 @@ MonoBehaviour:
   circlePrefab: {fileID: -7798726235045671919, guid: 4637b325798c340499ba0a5f850bbdd6, type: 3}
   squarePrefab: {fileID: 7060046076133821630, guid: 3dfb881c09c7cbd438dbd064f814f4d4, type: 3}
   moveSpeed: 5
-  scrollSpeed: 100
+  scrollSpeed: 1
 --- !u!4 &205956709
 Transform:
   m_ObjectHideFlags: 0

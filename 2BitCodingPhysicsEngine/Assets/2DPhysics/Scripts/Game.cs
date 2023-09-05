@@ -60,7 +60,7 @@ public class Game : MonoBehaviour
             world.AddBody(s);
         }
 
-        player.body.Move((new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")) * Time.deltaTime * moveSpeed));
+        player.body.AddForce((new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")) * moveSpeed));
         cam.transform.position = Vector3.Lerp(cam.transform.position, new Vector3(player.body.position.x, player.body.position.y, -10), 0.05f);
         cam.orthographicSize += Input.mouseScrollDelta.y * Time.deltaTime * scrollSpeed;
 

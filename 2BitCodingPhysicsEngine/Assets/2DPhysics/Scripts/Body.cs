@@ -13,6 +13,7 @@ public struct Body
     public Vector2 linearVelocity;
     public Quaternion rotation;
     public float rotationalVelocity;
+    private Vector2 force;
 
     public float mass;
     public float density;
@@ -35,11 +36,20 @@ public struct Body
         this.position = pos;
     }
 
+    public void AddForce(Vector2 f)
+    {
+        force += f;
+    }
+
+
     public void Step(float dt)
     {
+        this.linearVelocity += this.force / this.mass * dt;
         this.position += this.linearVelocity * dt;
         this.rotation *= Quaternion.AngleAxis(rotationalVelocity * dt, Vector3.forward);
+        this.force = Vector2.zero;
     }
+
 
     public static bool CreateCircleBody(float _radius, Vector2 _position, float _density, bool _isStatic, float _restitution, out Body body, out string error)
     {

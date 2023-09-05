@@ -63,26 +63,40 @@ public sealed class World
             for (int j = i + 1; j < shapesTemp.Length; j++)
             {
                 Shape b = shapesTemp[j];
-                Collide(a, b, out normal, out depth);
+                if (Collide(a, b, out normal, out depth))
+                {
+                    a.body.Move(-normal * depth * 0.5f);
+                    b.body.Move(normal * depth * 0.5f);
 
+                    ResolveCollision(a, b, normal, depth);
+
+                    a.OnCollision(b);
+                    b.OnCollision(a);
+                }
             }
 
         }
     }
 
-    void Collide(Shape a, Shape b, out Vector2 normal, out float depth)
+    void ResolveCollision(Shape a, Shape b, Vector2 normal, float depth)
+    {
+        Vector2 relVel = b.body.linearVelocity - a.body.linearVelocity;
+        float restitution = Mathf.Min(a.body.restitution, b.body.restitution);
+        float impulseMag = -(1 + restitution) * Vector2.Dot(relVel, normal);
+        impulseMag /= (1/a.body.mass + 1/b.body.mass);
+        //disregard rotation and friction
+
+        a.body.linearVelocity -= impulseMag / a.body.mass * normal;
+        b.body.linearVelocity += impulseMag / b.body.mass * normal;
+    }
+
+    bool Collide(Shape a, Shape b, out Vector2 normal, out float depth)
     {
         depth = 0;
         normal = Vector2.zero;
         if (a.body.type == ShapeType.Circle && b.body.type == ShapeType.Circle)
         {
-            if (Collisions.IntersetCircles(a.body.position, a.body.radius, b.body.position, b.body.radius, out normal, out depth))
-            {
-                a.body.Move(-normal * depth * 0.5f);
-                b.body.Move(normal * depth * 0.5f);
-                a.OnCollision(b);
-                b.OnCollision(a);
-            }
+            return Collisions.IntersetCircles(a.body.position, a.body.radius, b.body.position, b.body.radius, out normal, out depth);
         }
         else if (IsPolygon(a.body.type) && IsPolygon(b.body.type))
         {
@@ -97,26 +111,14 @@ public sealed class World
             normalsA.CopyTo(z, 0);
             normalsB.CopyTo(z, normalsA.Length);
 
-            if (Collisions.IntersectPolygons(verticesA, verticesB, z, out normal, out depth))
-            {
-                a.body.Move(-normal * depth * 0.5f);
-                b.body.Move(normal * depth * 0.5f);
-                a.OnCollision(b);
-                b.OnCollision(a);
-            }
+            return Collisions.IntersectPolygons(verticesA, verticesB, z, out normal, out depth);
         }
         else if (IsPolygon(a.body.type) && b.body.type == ShapeType.Circle)
         {
             BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
             Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
             Vector2[] normalsA = Collisions.GetNormals(verticesA);
-            if (Collisions.IntersectCirclePolygon(b.body.position, b.body.radius, verticesA, normalsA, out normal, out depth))
-            {
-                a.body.Move(-normal * depth * 0.5f);
-                b.body.Move(normal * depth * 0.5f);
-                a.OnCollision(b);
-                b.OnCollision(a);
-            }
+            return Collisions.IntersectCirclePolygon(b.body.position, b.body.radius, verticesA, normalsA, out normal, out depth);
         }
         else if (IsPolygon(b.body.type) && a.body.type == ShapeType.Circle)
         {
@@ -125,12 +127,11 @@ public sealed class World
             Vector2[] normalsB = Collisions.GetNormals(verticesB);
             if (Collisions.IntersectCirclePolygon(a.body.position, a.body.radius, verticesB, normalsB, out normal, out depth))
             {
-                a.body.Move(normal * depth * 0.5f);
-                b.body.Move(-normal * depth * 0.5f);
-                a.OnCollision(b);
-                b.OnCollision(a);
+                normal = -normal;
+                return true;
             }
         }
+        return false;
     }
 
     Vector2[] GetCounterClockwiseVertices(BoxVertices vertices)
