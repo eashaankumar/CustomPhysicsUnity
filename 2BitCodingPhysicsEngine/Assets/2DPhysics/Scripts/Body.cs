@@ -35,6 +35,11 @@ public struct Body
         }
     }
 
+    public float Mass
+    {
+        get { return mass; }
+    }
+
     public void Move(Vector2 amt)
     {
         this.position += amt;
@@ -158,5 +163,34 @@ public struct Body
             type = ShapeType.Box,
         };
         return true;
+    }
+
+    public AABB GetAABB()
+    {
+        AABB aabb;
+        if (this.type == ShapeType.Box)
+        {
+            BoxVertices vertices = new BoxVertices(position, size, rotation);
+            float[] xVerts = new float[] { vertices.topLeft.x, vertices.topRight.x, vertices.bottomLeft.x, vertices.bottomRight.x };
+            float[] yVerts = new float[] { vertices.topLeft.y, vertices.topRight.y, vertices.bottomLeft.y, vertices.bottomRight.y };
+
+            float minX = Mathf.Min(xVerts);
+            float maxX = Mathf.Max(xVerts);
+
+            float minY = Mathf.Min(yVerts);
+            float maxY = Mathf.Max(yVerts);
+
+            aabb = new AABB(new Vector2(minX, minY), new Vector2(minY, maxY));  
+        }
+        else if (this.type == ShapeType.Circle)
+        {
+            aabb = new AABB(position + (Vector2.left + Vector2.down) * radius, position + (Vector2.up + Vector2.right) * radius);
+        }
+        else
+        {
+            throw new System.Exception("Unknown shape type " + this.type);
+        }
+
+        return aabb;
     }
 }

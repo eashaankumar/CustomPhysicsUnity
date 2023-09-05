@@ -40,6 +40,7 @@ public sealed class World
     {
         foreach(Shape body in shapes)
         {
+            body.body.AddForce(body.body.Mass * gravity);
             body.body.Step(dt);
         }
     }

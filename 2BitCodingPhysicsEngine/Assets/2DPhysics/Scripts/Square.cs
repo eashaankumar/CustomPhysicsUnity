@@ -83,6 +83,6 @@ public class Square : Shape
             Destroy(gameObject);
         }
         transform.localScale = body.size / 2;
-        body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
+        //body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
     }
 }

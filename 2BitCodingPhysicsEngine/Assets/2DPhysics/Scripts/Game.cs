@@ -31,7 +31,7 @@ public class Game : MonoBehaviour
     private void Start()
     {
         // player
-        player = Instantiate(squarePrefab, Vector2.zero, Quaternion.identity);
+        /*player = Instantiate(squarePrefab, Vector2.zero, Quaternion.identity);
         string error;
         if (!Body.CreateBoxBody(Vector2.one * 0.5f, Vector2.zero, 5f, false, 0.5f, out player.body, out error))
         {
@@ -43,10 +43,11 @@ public class Game : MonoBehaviour
             player.reg = Color.Lerp(Color.blue, Color.white, 0.5f);
             player.reg.a = 1;
             world.AddBody(player);
-        }
+        }*/
+        string error;
         // platform
         platform = Instantiate(squarePrefab, Vector2.zero, Quaternion.identity);
-        if (!Body.CreateBoxBody(new Vector2(5, 0.5f), Vector2.zero, 5f, true, 0.5f, out platform.body, out error))
+        if (!Body.CreateBoxBody(new Vector2(5, 0.5f), Vector2.down * 3f, 5f, true, 0.5f, out platform.body, out error))
         {
             Debug.LogError(error);
         }
@@ -55,7 +56,7 @@ public class Game : MonoBehaviour
             print("Created platform");
             platform.reg = Color.Lerp(Color.red, Color.white, 0.5f);
             platform.reg.a = 1;
-            platform.body.rotation = Quaternion.AngleAxis(-15, Vector3.forward);
+            //platform.body.rotation = Quaternion.AngleAxis(-15, Vector3.forward);
             world.AddBody(platform);
         }
     }
@@ -76,8 +77,9 @@ public class Game : MonoBehaviour
             world.AddBody(s);
         }
 
-        player.body.AddForce((new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")) * moveSpeed));
-        cam.transform.position = Vector3.Lerp(cam.transform.position, new Vector3(player.body.position.x, player.body.position.y, -10), 0.05f);
+        cam.transform.Translate((new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")) * moveSpeed * Time.deltaTime));
+        //player.body.AddForce((new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")) * moveSpeed));
+        //cam.transform.position = Vector3.Lerp(cam.transform.position, new Vector3(player.body.position.x, player.body.position.y, -10), 0.05f);
         cam.orthographicSize += Input.mouseScrollDelta.y * Time.deltaTime * scrollSpeed;
 
         world.Step(Time.deltaTime);
