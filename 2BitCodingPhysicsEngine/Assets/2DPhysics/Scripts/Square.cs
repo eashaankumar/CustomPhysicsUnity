@@ -18,7 +18,7 @@ public class Square : Shape
         reg = Color.HSVToRGB(Random.value, Random.value, Random.Range(0.5f, 1.0f));
         spriteRenderer.color = reg;
 
-        Vector2 size = new Vector2(1, 1);//new Vector2(Random.Range(0.2f, 1.0f), Random.Range(0.2f, 1.0f)) * 1;
+        Vector2 size = new Vector2(Random.Range(0.2f, 1.0f), Random.Range(0.2f, 1.0f)) * 1;
         float density = Random.Range(0.5f, 10f);
         float restitution = Random.value;
         string error = "";

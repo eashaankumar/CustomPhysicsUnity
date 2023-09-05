@@ -32,10 +32,10 @@ public static class Collisions
     {
         Debug.Assert(verticesA.Length + verticesB.Length == normals.Length);
         normal = Vector2.zero;
-        depth = 0;
-        foreach(Vector2 n in normals)
+        depth = float.MaxValue;
+        foreach (Vector2 n in normals)
         {
-            n.Normalize();
+            //n.Normalize();
             MinMax minMaxA = Collisions.ProjectVerticesMinMax(n, verticesA);
             MinMax minMaxB = Collisions.ProjectVerticesMinMax(n, verticesB);
             if (minMaxA.min >= minMaxB.max || minMaxB.min > minMaxA.max)
@@ -43,8 +43,38 @@ public static class Collisions
                 // serparation
                 return false;
             }
+            float axisDepth = Mathf.Min(minMaxB.max - minMaxA.min, minMaxA.max - minMaxB.min);
+            if (axisDepth < depth)
+            {
+                depth = axisDepth;
+                normal = n;
+            }
         }
+
+        depth /= normal.magnitude;
+        normal = normal.normalized;
+
+        Vector2 centerA = GeometricCenter(verticesA);
+        Vector2 centerB = GeometricCenter(verticesB);
+
+        Vector2 direction = centerB - centerA;
+        if (Vector2.Dot(direction, normal) < 0)
+        {
+            normal = -normal;
+        }
+
         return true;
+    }
+
+    public static Vector2 GeometricCenter(Vector2[] vertices)
+    {
+        Vector2 mean = Vector2.zero;
+        foreach(Vector2 v in vertices)
+        {
+            mean += v;
+        }    
+
+        return mean / vertices.Length;
     }
 
     public static Vector2[] GetNormals(Vector2[] vertices)
@@ -56,7 +86,7 @@ public static class Collisions
             Vector2 vb = vertices[(i + 1)%vertices.Length];
             Vector2 edge = vb - va;
             Vector2 axis = Quaternion.AngleAxis(90, Vector3.forward) * edge;
-            normals[i] = axis;
+            normals[i] = axis.normalized;
         }
         return normals;
     }

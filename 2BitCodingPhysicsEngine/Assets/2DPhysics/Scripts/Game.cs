@@ -88,6 +88,8 @@ public class Game : MonoBehaviour
 
                     if (Collisions.IntersectPolygons(verticesA, verticesB, z, out normal, out depth))
                     {
+                        a.body.Move(-normal * depth * 0.5f);
+                        b.body.Move(normal * depth * 0.5f);
                         a.OnCollision(b);
                         b.OnCollision(a);
                     }
