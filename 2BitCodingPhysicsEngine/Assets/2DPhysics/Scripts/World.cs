@@ -63,10 +63,23 @@ public sealed class World
             for (int j = i + 1; j < shapesTemp.Length; j++)
             {
                 Shape b = shapesTemp[j];
+                if (a.body.isStatic && b.body.isStatic) continue;
+                
                 if (Collide(a, b, out normal, out depth))
                 {
-                    a.body.Move(-normal * depth * 0.5f);
-                    b.body.Move(normal * depth * 0.5f);
+                    if (a.body.isStatic)
+                    {
+                        b.body.Move(normal * depth * 1f);
+                    }
+                    else if (b.body.isStatic)
+                    {
+                        a.body.Move(-normal * depth * 1);
+                    }
+                    else
+                    {
+                        a.body.Move(-normal * depth * 0.5f);
+                        b.body.Move(normal * depth * 0.5f); 
+                    }
 
                     ResolveCollision(a, b, normal, depth);
 
@@ -83,11 +96,11 @@ public sealed class World
         Vector2 relVel = b.body.linearVelocity - a.body.linearVelocity;
         float restitution = Mathf.Min(a.body.restitution, b.body.restitution);
         float impulseMag = -(1 + restitution) * Vector2.Dot(relVel, normal);
-        impulseMag /= (1/a.body.mass + 1/b.body.mass);
+        impulseMag /= (a.body.InvMass + b.body.InvMass);
         //disregard rotation and friction
 
-        a.body.linearVelocity -= impulseMag / a.body.mass * normal;
-        b.body.linearVelocity += impulseMag / b.body.mass * normal;
+        a.body.linearVelocity -= impulseMag * a.body.InvMass * normal;
+        b.body.linearVelocity += impulseMag * b.body.InvMass * normal;
     }
 
     bool Collide(Shape a, Shape b, out Vector2 normal, out float depth)

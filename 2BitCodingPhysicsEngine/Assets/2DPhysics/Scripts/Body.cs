@@ -15,7 +15,8 @@ public struct Body
     public float rotationalVelocity;
     private Vector2 force;
 
-    public float mass;
+    private float mass;
+    private float invMass;
     public float density;
     public float restitution; // bouncy
     public float area;
@@ -25,6 +26,14 @@ public struct Body
     public Vector2 size;
 
     public ShapeType type;
+
+    public float InvMass
+    {
+        get
+        {
+            return invMass;
+        }
+    }
 
     public void Move(Vector2 amt)
     {
@@ -44,9 +53,17 @@ public struct Body
 
     public void Step(float dt)
     {
-        this.linearVelocity += this.force / this.mass * dt;
-        this.position += this.linearVelocity * dt;
-        this.rotation *= Quaternion.AngleAxis(rotationalVelocity * dt, Vector3.forward);
+        if (!isStatic)
+        {
+            this.linearVelocity += this.force / this.mass * dt;
+            this.position += this.linearVelocity * dt;
+            this.rotation *= Quaternion.AngleAxis(rotationalVelocity * dt, Vector3.forward);
+        }
+        else
+        {
+            this.linearVelocity = Vector2.zero;
+            this.rotationalVelocity = 0;
+        }
         this.force = Vector2.zero;
     }
 
@@ -86,6 +103,7 @@ public struct Body
         {
             position=_position,
             mass = mass,
+            invMass = 1 / mass,
             density = _density,
             restitution = _restitution,
             area = _area,
@@ -131,6 +149,7 @@ public struct Body
         {
             position = _position,
             mass = mass,
+            invMass = 1 / mass,
             density = _density,
             restitution = _restitution,
             area = _area,

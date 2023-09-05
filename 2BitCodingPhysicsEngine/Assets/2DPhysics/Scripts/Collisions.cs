@@ -25,6 +25,8 @@ public static class Collisions
             Vector2 n = Vector2.zero;
             if (i < normals.Length) n = normals[i];
             else n = cpAxis;
+
+            n.Normalize();
             MinMax minMaxA = Collisions.ProjectVerticesMinMax(n, vertices);
             MinMax minMaxB = Collisions.ProjectCircle(center, radius, n);
 
@@ -40,9 +42,6 @@ public static class Collisions
                 normal = n;
             }
         }
-
-        depth /= normal.magnitude;
-        normal = normal.normalized;
 
         Vector2 centerA = GeometricCenter(vertices);
         Vector2 centerB = center;
@@ -82,7 +81,7 @@ public static class Collisions
         depth = float.MaxValue;
         foreach (Vector2 n in normalsAB)
         {
-            //n.Normalize();
+            n.Normalize(); 
             MinMax minMaxA = Collisions.ProjectVerticesMinMax(n, verticesA);
             MinMax minMaxB = Collisions.ProjectVerticesMinMax(n, verticesB);
             if (minMaxA.min >= minMaxB.max || minMaxB.min > minMaxA.max)
@@ -97,9 +96,6 @@ public static class Collisions
                 normal = n;
             }
         }
-
-        depth /= normal.magnitude;
-        normal = normal.normalized;
 
         Vector2 centerA = GeometricCenter(verticesA);
         Vector2 centerB = GeometricCenter(verticesB);

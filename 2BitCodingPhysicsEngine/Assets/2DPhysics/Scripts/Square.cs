@@ -22,7 +22,7 @@ public class Square : Shape
         transform.position = body.position;
         transform.localScale = body.size/2;
 
-        body.rotation *= Quaternion.AngleAxis(90 * Time.deltaTime, Vector3.forward);
+        //body.rotation *= Quaternion.AngleAxis(90 * Time.deltaTime, Vector3.forward);
 
         transform.rotation = body.rotation;
 
