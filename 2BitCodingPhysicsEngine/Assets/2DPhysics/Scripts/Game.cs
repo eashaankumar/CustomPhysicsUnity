@@ -87,5 +87,13 @@ public class Game : MonoBehaviour
         world.Step(Time.deltaTime, iterations);
     }
 
-   
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        foreach(Vector2 contactPoint in world.ContactPointsList)
+        {
+            Gizmos.DrawSphere(contactPoint, 0.1f);
+        }
+    }
+
 }

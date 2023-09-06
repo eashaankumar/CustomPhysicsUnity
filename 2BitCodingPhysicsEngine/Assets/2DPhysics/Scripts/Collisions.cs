@@ -10,6 +10,139 @@ public static class Collisions
         public float min, max;
     }
 
+    public static bool IntersectAABB(AABB a, AABB b)
+    {
+        if (a.max.x <= b.min.x || b.max.x <= a.min.x ||
+            a.max.y <= b.min.y || b.max.y <= a.min.y)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public static bool Collide(Shape a, Shape b, out Vector2 normal, out float depth)
+    {
+        depth = 0;
+        normal = Vector2.zero;
+        if (a.body.type == ShapeType.Circle && b.body.type == ShapeType.Circle)
+        {
+            return Collisions.IntersetCircles(a.body.position, a.body.radius, b.body.position, b.body.radius, out normal, out depth);
+        }
+        else if (IsPolygon(a.body.type) && IsPolygon(b.body.type))
+        {
+            BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
+            BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
+            Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
+            Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
+            Vector2[] normalsA = Collisions.GetNormals(verticesA);
+            Vector2[] normalsB = Collisions.GetNormals(verticesB);
+
+            Vector2[] z = new Vector2[normalsA.Length + normalsB.Length];
+            normalsA.CopyTo(z, 0);
+            normalsB.CopyTo(z, normalsA.Length);
+
+            return Collisions.IntersectPolygons(verticesA, verticesB, z, out normal, out depth);
+        }
+        else if (IsPolygon(a.body.type) && b.body.type == ShapeType.Circle)
+        {
+            BoxVertices PolyGonA = new BoxVertices(a.body.position, a.body.size, a.body.rotation);
+            Vector2[] verticesA = GetCounterClockwiseVertices(PolyGonA);
+            Vector2[] normalsA = Collisions.GetNormals(verticesA);
+            return Collisions.IntersectCirclePolygon(b.body.position, b.body.radius, verticesA, normalsA, out normal, out depth);
+        }
+        else if (IsPolygon(b.body.type) && a.body.type == ShapeType.Circle)
+        {
+            BoxVertices PolyGonB = new BoxVertices(b.body.position, b.body.size, b.body.rotation);
+            Vector2[] verticesB = GetCounterClockwiseVertices(PolyGonB);
+            Vector2[] normalsB = Collisions.GetNormals(verticesB);
+            if (Collisions.IntersectCirclePolygon(a.body.position, a.body.radius, verticesB, normalsB, out normal, out depth))
+            {
+                normal = -normal;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void FindContactPoints(Body a, Body b, out Vector2[] contacts)
+    {
+        contacts = new Vector2[0];
+        if (a.type == ShapeType.Circle && b.type == ShapeType.Circle)
+        {
+            Vector2 contact;
+            Collisions.FindContactPoint(a.position, a.radius, b.position, out contact);
+            contacts = new Vector2[1] { contact };
+        }
+        else if (a.type == ShapeType.Box && b.type == ShapeType.Box)
+        {
+
+        }
+        else if(a.type == ShapeType.Circle && b.type == ShapeType.Box)
+        {
+            Vector2 contact;
+            BoxVertices vertices = new BoxVertices(b.position, b.size, b.rotation);
+            Collisions.FindContactPoint(a.position, a.radius, GetCounterClockwiseVertices(vertices), out contact);
+            contacts = new Vector2[1] { contact };
+        }
+        else if (a.type == ShapeType.Box && b.type == ShapeType.Circle)
+        {
+            Vector2 contact;
+            BoxVertices vertices = new BoxVertices(a.position, a.size, a.rotation);
+            Collisions.FindContactPoint(b.position, b.radius, GetCounterClockwiseVertices(vertices), out contact);
+            contacts = new Vector2[1] { contact };
+        }
+    }
+
+    public static void PointSegmentDistance(Vector2 p, Vector2 a, Vector2 b, out float distanceSq, out Vector2 closestPoint)
+    {
+        Vector2 ab = b - a;
+        Vector2 ap = p - a;
+
+        float proj = Vector2.Dot(ap, ab);
+        float abLenSq = ab.sqrMagnitude;
+        float d = proj / abLenSq;
+
+        if (d <= 0)
+        {
+            closestPoint = a;
+        }
+        else if (d >= 1f)
+        {
+            closestPoint = b;
+        }
+        else
+        {
+            closestPoint = a + ab * d;
+        }
+        distanceSq = Vector2.SqrMagnitude(p - closestPoint);
+    }
+
+    public static void FindContactPoint(Vector2 center, float radius, Vector2[] vertices, out Vector2 cp)
+    {
+        cp = Vector2.zero;
+        Vector2 polygonCenter = GeometricCenter(vertices);
+
+        float minDistSq = float.MaxValue;
+
+        for(int i = 0; i < vertices.Length; i++)
+        {
+            Vector2 va = vertices[i];
+            Vector2 vb = vertices[(i + 1) % vertices.Length];
+            Collisions.PointSegmentDistance(center, va, vb, out float distanceSq, out Vector2 contact);
+            if (distanceSq < minDistSq)
+            {
+                minDistSq = distanceSq;
+                cp = contact;
+            }
+        }
+    }
+
+    public static void FindContactPoint(Vector2 centerA, float radiusA, Vector2 centerB, out Vector2 cp)
+    {
+        Vector2 ab = (centerB - centerA).normalized;
+        cp = centerA + ab * radiusA;
+    }
+
     public static bool IntersectCirclePolygon(Vector2 center, float radius, Vector2[] vertices, Vector2[] normals, out Vector2 normal, out float depth)
     {
         Debug.Assert(vertices.Length == normals.Length);
@@ -109,6 +242,11 @@ public static class Collisions
         return true;
     }
 
+    public static bool IsPolygon(ShapeType type)
+    {
+        return type == ShapeType.Box;
+    }
+
     public static Vector2 GeometricCenter(Vector2[] vertices)
     {
         Vector2 mean = Vector2.zero;
@@ -132,6 +270,11 @@ public static class Collisions
             normals[i] = axis.normalized;
         }
         return normals;
+    }
+
+    public static Vector2[] GetCounterClockwiseVertices(BoxVertices vertices)
+    {
+        return new Vector2[] { vertices.topLeft, vertices.topRight, vertices.bottomRight, vertices.bottomLeft };
     }
 
     private static MinMax ProjectCircle(Vector2 center, float radius, Vector2 normal)
