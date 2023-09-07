@@ -21,6 +21,7 @@ public struct Body
     public float restitution; // bouncy
     public float area;
     public bool isStatic;
+    private float inertia, inverseInertia;
 
     public float radius;
     public Vector2 size;
@@ -104,6 +105,7 @@ public struct Body
         // mass = area * depth * density
         float mass = _area * 1f * _density;
 
+
         body = new Body
         {
             position=_position,
@@ -116,6 +118,9 @@ public struct Body
             radius = _radius,
             type=ShapeType.Circle,
         };
+
+        body.inertia = body.CalculateRotationalIntertia();
+        body.inverseInertia = 1f / body.inertia;
         return true;
     }
 
@@ -162,7 +167,27 @@ public struct Body
             size = _size,
             type = ShapeType.Box,
         };
+
+        body.inertia = body.CalculateRotationalIntertia();
+        body.inverseInertia = 1f / body.inertia;
+
         return true;
+    }
+
+    private float CalculateRotationalIntertia()
+    {
+        if (type == ShapeType.Circle)
+        {
+            return 0.5f * this.Mass * this.radius * this.radius;
+        }
+        else if (type == ShapeType.Box)
+        {
+            return (1f / 12f) * this.Mass * (this.size.x * this.size.x + this.size.y * this.size.y);
+        }
+        else
+        {
+            throw new System.ArgumentException("Unsupported shape type for rotation inertia " + type);
+        }
     }
 
     public AABB GetAABB()
