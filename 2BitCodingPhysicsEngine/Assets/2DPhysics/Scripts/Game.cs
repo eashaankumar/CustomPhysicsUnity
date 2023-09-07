@@ -89,10 +89,13 @@ public class Game : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        foreach(Vector2 contactPoint in world.ContactPointsList)
+        if (world != null)
         {
-            Gizmos.DrawSphere(contactPoint, 0.1f);
+            Gizmos.color = Color.green;
+            foreach (Vector2 contactPoint in world.ContactPointsList)
+            {
+                Gizmos.DrawSphere(contactPoint, 0.1f);
+            }
         }
     }
 

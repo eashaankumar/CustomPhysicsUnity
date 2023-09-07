@@ -75,7 +75,15 @@ public static class Collisions
         }
         else if (a.type == ShapeType.Box && b.type == ShapeType.Box)
         {
-
+            BoxVertices verticesA = new BoxVertices(a.position, a.size, a.rotation);
+            BoxVertices verticesB = new BoxVertices(b.position, b.size, b.rotation);
+            Collisions.FindContactPoint(GetCounterClockwiseVertices(verticesA),
+                                        GetCounterClockwiseVertices(verticesB), out Vector2 cp1, out Vector2 cp2, out int contactCount);
+            contacts = new Vector2[contactCount];
+            if (contactCount > 0)
+                contacts[0] = cp1;
+            if (contactCount > 1)
+                contacts[1] = cp2;
         }
         else if(a.type == ShapeType.Circle && b.type == ShapeType.Box)
         {
@@ -115,6 +123,81 @@ public static class Collisions
             closestPoint = a + ab * d;
         }
         distanceSq = Vector2.SqrMagnitude(p - closestPoint);
+    }
+
+    public static void FindContactPoint(Vector2[] verticesA, Vector2[] verticesB, out Vector2 cp1, out Vector2 cp2, out int contactCount)
+    {
+        cp1 = Vector2.zero;
+        cp2 = Vector2.zero;
+        contactCount = 0;
+
+        float minDisSq = float.MaxValue;
+
+        for (int i = 0; i < verticesA.Length; i++)
+        {
+            Vector2 p = verticesA[i];
+            for(int j = 0; j < verticesB.Length; j++)
+            {
+                Vector2 va = verticesB[j];
+                Vector2 vb = verticesB[(j + 1) % verticesB.Length];
+
+                Collisions.PointSegmentDistance(p, va, vb, out float distSq, out Vector2 cp);
+
+                if (Collisions.NearlyEqual(distSq, minDisSq))
+                {
+                    if (!Collisions.NearlyEqual(cp,cp1))
+                    {
+                        cp2 = cp;
+                        contactCount = 2;
+                    }
+                }
+                if (distSq < minDisSq)
+                {
+                    minDisSq = distSq;
+                    contactCount = 1;
+                    cp1 = cp;
+                }
+            }
+        }
+
+        for (int i = 0; i < verticesB.Length; i++)
+        {
+            Vector2 p = verticesB[i];
+            for (int j = 0; j < verticesA.Length; j++)
+            {
+                Vector2 va = verticesA[j];
+                Vector2 vb = verticesA[(j + 1) % verticesA.Length];
+
+                Collisions.PointSegmentDistance(p, va, vb, out float distSq, out Vector2 cp);
+
+                if (Collisions.NearlyEqual(distSq, minDisSq))
+                {
+                    if (!Collisions.NearlyEqual(cp, cp1))
+                    {
+                        cp2 = cp;
+                        contactCount = 2;
+                    }
+                }
+                if (distSq < minDisSq)
+                {
+                    minDisSq = distSq;
+                    contactCount = 1;
+                    cp1 = cp;
+                }
+            }
+        }
+
+    }
+
+    static readonly float VerySmallAmount = 1e-3f;
+    public static bool NearlyEqual(float a, float b)
+    {
+        return Mathf.Abs(a - b) < VerySmallAmount;
+    }
+
+    public static bool NearlyEqual(Vector2 a, Vector2 b)
+    {
+        return NearlyEqual(a.x, b.x) && NearlyEqual(a.y, b.y);
     }
 
     public static void FindContactPoint(Vector2 center, float radius, Vector2[] vertices, out Vector2 cp)

@@ -37,7 +37,7 @@ public class Square : Shape
         }
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         BoxVertices vertices = new BoxVertices(body.position, body.size, body.rotation);
 

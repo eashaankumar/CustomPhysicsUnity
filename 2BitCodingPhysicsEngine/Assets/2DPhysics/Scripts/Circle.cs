@@ -41,7 +41,7 @@ public class Circle : Shape
         
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         AABB aabb = body.GetAABB();
 
