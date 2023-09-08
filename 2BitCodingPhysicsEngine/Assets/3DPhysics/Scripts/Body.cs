@@ -41,7 +41,7 @@ public struct SphereBody: IBody
         force = float3.zero;
         density = _d;
         isStatic = _static;
-        restitution = _restitution;
+        restitution = Mathf.Clamp01(_restitution);
         staticFriction = _sf;
         dynamicFriction = _df;
 
@@ -69,5 +69,25 @@ public struct SphereBody: IBody
             this.angularVelocityRadians = 0;
         }
         this.force = float3.zero;
+    }
+
+    public void Move(float3 amt)
+    {
+        this.position += amt;
+    }
+
+    public void MoveTo(float3 pos)
+    {
+        this.position = pos;
+    }
+
+    public void AddForce(float3 f)
+    {
+        force += f;
+    }
+
+    public AABB AABB()
+    {
+        return new AABB(position + (Utils.Left + Utils.Down + Utils.Back) * radius, position + (Utils.Up + Utils.Right + Utils.Forward) * radius);
     }
 }
