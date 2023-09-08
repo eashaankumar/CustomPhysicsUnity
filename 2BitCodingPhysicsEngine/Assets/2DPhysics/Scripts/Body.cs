@@ -22,7 +22,7 @@ public struct Body
     public float area;
     public bool isStatic;
     private float inertia, inverseInertia;
-    private float staticFriction, dynamicFriction;
+    public float staticFriction, dynamicFriction;
 
     public float radius;
     public Vector2 size;
