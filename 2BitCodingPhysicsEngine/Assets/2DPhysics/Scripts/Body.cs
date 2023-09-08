@@ -41,6 +41,16 @@ public struct Body
         get { return mass; }
     }
 
+    public float Inertia
+    {
+        get { return inertia; }
+    }
+
+    public float InvInertia
+    {
+        get { return inverseInertia; }
+    }
+
     public void Move(Vector2 amt)
     {
         this.position += amt;

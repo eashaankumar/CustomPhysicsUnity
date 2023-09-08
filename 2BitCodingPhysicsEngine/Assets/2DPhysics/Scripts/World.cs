@@ -15,12 +15,15 @@ public sealed class World
     private List<CollisionManifold> contactList;
     public List<Vector2> ContactPointsList;
 
+    List<(int, int)> contactPairs;
+
     public World()
     {
         gravity = Vector2.down * 9.81f;
         shapes = new HashSet<Shape>();
         contactList = new List<CollisionManifold>();
         this.ContactPointsList = new List<Vector2>();
+        contactPairs = new List<(int, int)>();
     }
 
     public void AddBody(Shape body)
@@ -39,8 +42,11 @@ public sealed class World
         float dtIter = dt / iterations;
         for (int i = 0; i < iterations; i++)
         {
-            DoCollisions();
+            Shape[] shapesTemp = new Shape[shapes.Count];
+            shapes.CopyTo(shapesTemp);
             StepBodies(dtIter);
+            BroadPhase(shapesTemp);
+            NarrowPhase(shapesTemp);
         }
     }
 
@@ -57,17 +63,12 @@ public sealed class World
     {
         shapes.RemoveWhere(s => s == null);
     }
-
-    void DoCollisions()
+    
+    void BroadPhase(Shape[] shapesTemp)
     {
         this.contactList.Clear();
         this.ContactPointsList.Clear();
-
-        Shape[] shapesTemp = new Shape[shapes.Count];
-        shapes.CopyTo(shapesTemp);
-
-        Vector2 normal;
-        float depth;
+        contactPairs.Clear();
 
         for (int i = 0; i < shapesTemp.Length - 1; i++)
         {
@@ -84,42 +85,51 @@ public sealed class World
                 {
                     continue;
                 }
-                
-                if (Collisions.Collide(a, b, out normal, out depth))
-                {
-                  
-                    if (a.body.isStatic)
-                    {
-                        b.body.Move(normal * depth * 1f);
-                    }
-                    else if (b.body.isStatic)
-                    {
-                        a.body.Move(-normal * depth * 1);
-                    }
-                    else
-                    {
-                        a.body.Move(-normal * depth * 0.5f);
-                        b.body.Move(normal * depth * 0.5f); 
-                    }
 
-                    Vector2[] contacts;
-                    Collisions.FindContactPoints(a.body, b.body, out contacts);
-                    CollisionManifold manifold = new CollisionManifold(a, b, normal, depth, contacts);
-                    this.contactList.Add(manifold);
-
-                    ContactPointsList.AddRange(contacts);
-
-                    a.OnCollision(b);
-                    b.OnCollision(a);
-                }
+                contactPairs.Add((i, j));
             }
 
         }
+    }
 
-        for(int i = 0; i < this.contactList.Count; i++)
+    void NarrowPhase(Shape[] shapesTemp)
+    {
+        for (int i = 0; i < contactPairs.Count; i++)
         {
-            CollisionManifold man = contactList[i];
-            ResolveCollision(in man);
+            Vector2 normal;
+            float depth;
+            (int, int) pair = contactPairs[i];
+            Shape a = shapesTemp[pair.Item1];
+            Shape b = shapesTemp[pair.Item2];
+            if (Collisions.Collide(a, b, out normal, out depth))
+            {
+
+                if (a.body.isStatic)
+                {
+                    b.body.Move(normal * depth * 1f);
+                }
+                else if (b.body.isStatic)
+                {
+                    a.body.Move(-normal * depth * 1);
+                }
+                else
+                {
+                    a.body.Move(-normal * depth * 0.5f);
+                    b.body.Move(normal * depth * 0.5f);
+                }
+
+                Vector2[] contacts;
+                Collisions.FindContactPoints(a.body, b.body, out contacts);
+                CollisionManifold manifold = new CollisionManifold(a, b, normal, depth, contacts);
+                this.contactList.Add(manifold);
+
+                ContactPointsList.AddRange(contacts);
+
+                a.OnCollision(b);
+                b.OnCollision(a);
+
+                ResolveCollision(in manifold);
+            }
         }
     }
 
