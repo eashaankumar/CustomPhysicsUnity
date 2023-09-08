@@ -14,7 +14,9 @@ public sealed class World
     private Vector2 gravity;
     private List<CollisionManifold> contactList;
     public List<Vector2> ContactPointsList;
-
+    Vector2[] impulseList;
+    Vector2[] raList;
+    Vector2[] rbList;
     List<(int, int)> contactPairs;
 
     public World()
@@ -24,6 +26,9 @@ public sealed class World
         contactList = new List<CollisionManifold>();
         this.ContactPointsList = new List<Vector2>();
         contactPairs = new List<(int, int)>();
+        impulseList = new Vector2[2];
+        raList = new Vector2[2];
+        rbList = new Vector2[2];
     }
 
     public void AddBody(Shape body)
@@ -128,21 +133,87 @@ public sealed class World
                 a.OnCollision(b);
                 b.OnCollision(a);
 
-                ResolveCollision(in manifold);
+                ResolveCollisionWithRotation(in manifold);
             }
         }
     }
 
-    void ResolveCollision(in CollisionManifold man)
+    void ResolveCollisionBasic(in CollisionManifold man)
     {
         Vector2 relVel = man.b.body.linearVelocity - man.a.body.linearVelocity;
         float restitution = Mathf.Min(man.a.body.restitution, man.b.body.restitution);
         float impulseMag = -(1 + restitution) * Vector2.Dot(relVel, man.normal);
         impulseMag /= (man.a.body.InvMass + man.b.body.InvMass);
         //disregard rotation and friction
+        Vector2 impulse = impulseMag * man.normal;
 
-        man.a.body.linearVelocity -= impulseMag * man.a.body.InvMass * man.normal;
-        man.b.body.linearVelocity += impulseMag * man.b.body.InvMass * man.normal;
+        man.a.body.linearVelocity -= impulse * man.a.body.InvMass;
+        man.b.body.linearVelocity += impulse * man.b.body.InvMass;
+    }
+
+    void ResolveCollisionWithRotation(in CollisionManifold man)
+    {
+        float restitution = Mathf.Min(man.a.body.restitution, man.b.body.restitution);
+        this.impulseList[0] = this.impulseList[1] = Vector2.zero;
+        this.raList[0] = this.raList[1] = Vector2.zero;
+        this.rbList[0] = this.rbList[1] = Vector2.zero;
+
+        for (int i = 0; i < man.contacts.Length; i++)
+        {
+            Vector2 cp = man.contacts[i];
+            Vector2 ra = cp - man.a.body.position;
+            Vector2 rb = cp - man.b.body.position;
+
+            raList[i] = ra;
+            rbList[i] = rb;
+
+            Vector2 raPerp = Quaternion.AngleAxis(90, Vector3.forward) * ra;
+            Vector2 rbPerp = Quaternion.AngleAxis(90, Vector3.forward) * rb;
+
+            Vector2 angularLinearVelA = raPerp * man.a.body.angularVelocityRadians;
+            Vector2 angularLinearVelB = rbPerp * man.b.body.angularVelocityRadians;
+
+            Vector2 relativeVelocity = (man.b.body.linearVelocity + angularLinearVelB) - 
+                (man.a.body.linearVelocity + angularLinearVelA);
+
+            float contactVelMag = Vector2.Dot(relativeVelocity, man.normal);
+            if (contactVelMag > 0f)
+            {
+                // moving apart
+                continue;
+            }
+
+            float raPerpDotN = Vector2.Dot(raPerp, man.normal);
+            float rbPerpDotN = Vector2.Dot(rbPerp, man.normal);
+            float denominator = man.a.body.InvMass + man.b.body.InvMass +
+                (raPerpDotN * raPerpDotN) * man.a.body.InvInertia +
+                (rbPerpDotN * rbPerpDotN) * man.b.body.InvInertia;
+
+            float impulseMag = -(1 + restitution) * contactVelMag;
+            impulseMag /= denominator;
+            impulseMag /= (float)man.contacts.Length;
+            //disregard rotation and friction
+            Vector2 impulse = impulseMag * man.normal;
+
+            impulseList[i] = impulse;
+            // NOTE: impulse must be added in separate loop because we dont want to
+            // change the velocities before visiting next contacts
+        }
+
+        for(int i = 0; i < man.contacts.Length; i++)
+        {
+            Vector2 impulse = impulseList[i];
+            man.a.body.linearVelocity += -impulse * man.a.body.InvMass;
+            man.a.body.angularVelocityRadians += -Cross(raList[i], impulse) * man.a.body.InvInertia;
+            man.b.body.linearVelocity += impulse * man.b.body.InvMass;
+            man.b.body.angularVelocityRadians += Cross(rbList[i], impulse) * man.b.body.InvInertia;
+        }
+
+    }
+
+    public static float Cross(Vector2 a, Vector2 b)
+    {
+        return a.x * b.y - a.y * b.x;
     }
 
 

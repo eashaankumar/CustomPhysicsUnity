@@ -30,8 +30,8 @@ public class Circle : Shape
         }
 
         //body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
-
-        transform.localScale = Vector2.one * body.radius;
+        body.rotation = transform.rotation;
+        transform.localScale = Vector2.one * body.radius * 2;
     }
 
     // Start is called before the first frame update
@@ -39,6 +39,13 @@ public class Circle : Shape
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.Lerp(spriteRenderer.color, Color.black, 0.5f);
+        Vector2 up = body.rotation * Vector2.up;
+        Gizmos.DrawLine(body.position, body.position + up * body.radius);
     }
 
     private void OnDrawGizmosSelected()
@@ -52,7 +59,7 @@ public class Circle : Shape
     private void Update()
     {
         transform.position = body.position;
-        transform.localScale = Vector2.one * body.radius;
+        transform.localScale = Vector2.one * body.radius * 2;
         transform.rotation = body.rotation;
     }
 }

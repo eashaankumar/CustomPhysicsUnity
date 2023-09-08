@@ -20,7 +20,7 @@ public class Game : MonoBehaviour
     World world;
 
     Square player;
-    Square platform;
+    Square platform1, platform2;
 
     void Awake()
     {
@@ -48,18 +48,28 @@ public class Game : MonoBehaviour
         }*/
         string error;
         // platform
-        platform = Instantiate(squarePrefab, Vector2.zero, Quaternion.identity);
-        if (!Body.CreateBoxBody(new Vector2(5, 0.5f), Vector2.down * 3f, 5f, true, 0.5f, out platform.body, out error))
+        platform1 = Instantiate(squarePrefab, Vector2.zero, Quaternion.identity);
+        if (!Body.CreateBoxBody(new Vector2(5, 0.5f), Vector2.down * 3f, 5f, true, 0.5f, out platform1.body, out error))
         {
             Debug.LogError(error);
         }
         else
         {
             print("Created platform");
-            platform.reg = Color.Lerp(Color.red, Color.white, 0.5f);
-            platform.reg.a = 1;
             //platform.body.rotation = Quaternion.AngleAxis(-15, Vector3.forward);
-            world.AddBody(platform);
+            world.AddBody(platform1);
+        }
+
+        platform2 = Instantiate(squarePrefab, Vector2.zero, Quaternion.identity);
+        if (!Body.CreateBoxBody(new Vector2(2, 0.5f), Vector2.up * 3f + Vector2.left * 3, 5f, true, 0.5f, out platform2.body, out error))
+        {
+            Debug.LogError(error);
+        }
+        else
+        {
+            print("Created platform");
+            platform2.body.rotation = Quaternion.AngleAxis(-15, Vector3.forward);
+            world.AddBody(platform2);
         }
     }
 

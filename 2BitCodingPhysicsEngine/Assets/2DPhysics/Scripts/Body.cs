@@ -12,7 +12,7 @@ public struct Body
     public Vector2 position;
     public Vector2 linearVelocity;
     public Quaternion rotation;
-    public float rotationalVelocity;
+    public float angularVelocityRadians;
     private Vector2 force;
 
     private float mass;
@@ -22,6 +22,7 @@ public struct Body
     public float area;
     public bool isStatic;
     private float inertia, inverseInertia;
+    private float staticFriction, dynamicFriction;
 
     public float radius;
     public Vector2 size;
@@ -73,12 +74,12 @@ public struct Body
         {
             this.linearVelocity += this.force / this.mass * dt;
             this.position += this.linearVelocity * dt;
-            this.rotation *= Quaternion.AngleAxis(rotationalVelocity * dt, Vector3.forward);
+            this.rotation *= Quaternion.AngleAxis(this.angularVelocityRadians * Mathf.Rad2Deg * dt, Vector3.forward);
         }
         else
         {
             this.linearVelocity = Vector2.zero;
-            this.rotationalVelocity = 0;
+            this.angularVelocityRadians = 0;
         }
         this.force = Vector2.zero;
     }
@@ -129,6 +130,11 @@ public struct Body
             type=ShapeType.Circle,
         };
 
+        body.rotation = Quaternion.identity;
+
+        body.staticFriction = 0.6f;
+        body.dynamicFriction = 0.4f;
+
         body.inertia = body.CalculateRotationalIntertia();
         body.inverseInertia = 1f / body.inertia;
         return true;
@@ -178,8 +184,13 @@ public struct Body
             type = ShapeType.Box,
         };
 
+        body.staticFriction = 0.6f;
+        body.dynamicFriction = 0.4f;
+
         body.inertia = body.CalculateRotationalIntertia();
         body.inverseInertia = 1f / body.inertia;
+
+        body.rotation = Quaternion.identity;
 
         return true;
     }

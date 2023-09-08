@@ -10,7 +10,6 @@ public class Square : Shape
     int isColliding;
 
     SpriteRenderer spriteRenderer;
-    public Color reg;
     // Start is called before the first frame update
     void Awake()
     {
@@ -20,13 +19,13 @@ public class Square : Shape
     private void Update()
     {
         transform.position = body.position;
-        transform.localScale = body.size/2;
+        transform.localScale = body.size;
 
         //body.rotation *= Quaternion.AngleAxis(90 * Time.deltaTime, Vector3.forward);
 
         transform.rotation = body.rotation;
 
-        if (isColliding > 0)
+        /*if (isColliding > 0)
         {
             spriteRenderer.color = Color.white;
             isColliding--;
@@ -34,7 +33,7 @@ public class Square : Shape
         else
         {
             spriteRenderer.color = reg;
-        }
+        }*/
     }
 
     private void OnDrawGizmosSelected()
@@ -74,8 +73,7 @@ public class Square : Shape
 
     public override void RandomGenerate()
     {
-        reg = Color.HSVToRGB(Random.value, Random.value, Random.Range(0.5f, 1.0f));
-        spriteRenderer.color = reg;
+        spriteRenderer.color = Color.HSVToRGB(Random.value, Random.value, Random.Range(0.5f, 1.0f));
 
         Vector2 size = new Vector2(Random.Range(0.2f, 1.0f), Random.Range(0.2f, 1.0f)) * 1;
         float density = Random.Range(0.5f, 10f);
@@ -88,6 +86,6 @@ public class Square : Shape
             Destroy(gameObject);
         }
         transform.localScale = body.size / 2;
-        //body.rotation = Quaternion.AngleAxis(Random.value * 360, Vector3.forward);
+        body.rotation = transform.rotation;
     }
 }
