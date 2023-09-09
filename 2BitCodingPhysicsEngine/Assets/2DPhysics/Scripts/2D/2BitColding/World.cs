@@ -99,7 +99,6 @@ namespace MyPhysics.TwoD.TwoBitCoding
 
         void BroadPhase(Shape[] shapesTemp)
         {
-            this.contactList.Clear();
             this.ContactPointsList.Clear();
             contactPairs.Clear();
 
@@ -127,6 +126,7 @@ namespace MyPhysics.TwoD.TwoBitCoding
 
         void NarrowPhase(Shape[] shapesTemp)
         {
+            this.contactList.Clear();
             for (int i = 0; i < contactPairs.Count; i++)
             {
                 Vector2 normal;

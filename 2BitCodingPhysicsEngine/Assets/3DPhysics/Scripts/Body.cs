@@ -7,6 +7,7 @@ using UnityEngine;
 public interface IBody
 {
     public void Step(float dt);
+    public AABB AABB();
 }
 
 public struct SphereBody: IBody
@@ -90,4 +91,5 @@ public struct SphereBody: IBody
     {
         return new AABB(position + (Utils.Left + Utils.Down + Utils.Back) * radius, position + (Utils.Up + Utils.Right + Utils.Forward) * radius);
     }
+
 }

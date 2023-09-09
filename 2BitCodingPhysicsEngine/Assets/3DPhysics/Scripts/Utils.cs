@@ -12,4 +12,9 @@ public struct Utils
     public readonly static float3 Forward = new float3(0, 0, 1);
     public readonly static float3 Back = new float3(0, 0, -1);
 
+    public static bool CloseEnough(float3 a, float3 b)
+    {
+        return math.distancesq(a, b) < 1e-5f;
+    }
+
 }
