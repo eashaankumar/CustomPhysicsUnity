@@ -12,14 +12,14 @@ public interface IWorld
 
 public struct World : System.IDisposable, IWorld
 {
-    internal NativeHashMap<int, SphereBody> _bodies;
+    internal NativeHashMap<int, Body> _bodies;
     NativeList<float3> _contactPointsList;
     NativeList<(int, int)> _contactPairs;
     Unity.Mathematics.Random _random;
     float3 _gravity;
     public World(Allocator worldAllocator, int maxBodies, uint seed, float3 _gravity)
     {
-        _bodies = new NativeHashMap<int, SphereBody>(maxBodies, worldAllocator);
+        _bodies = new NativeHashMap<int, Body>(maxBodies, worldAllocator);
         _random = new Unity.Mathematics.Random(seed);
         _contactPointsList = new NativeList<float3>(worldAllocator);
         _contactPairs = new NativeList<(int, int)>(worldAllocator);
@@ -33,7 +33,7 @@ public struct World : System.IDisposable, IWorld
         if (_contactPairs.IsCreated) _contactPairs.Dispose();
     }
 
-    public bool AddSphere(SphereBody b, out int id)
+    public bool AddBody(Body b, out int id)
     {
         id = _random.NextInt();
         return _bodies.TryAdd(id, b);
@@ -61,7 +61,7 @@ public struct World : System.IDisposable, IWorld
     {
         foreach (int key in keys)
         {
-            SphereBody body = _bodies[key];
+            Body body = _bodies[key];
             body.AddForce(body.mass * _gravity);
             body.Step(dt);
             _bodies[key] = body;
@@ -77,12 +77,12 @@ public struct World : System.IDisposable, IWorld
         for (int i = 0; i < keys.Length - 1; i++)
         {
             int keyA = keys[i];
-            SphereBody a = _bodies[keyA];
+            Body a = _bodies[keyA];
             AABB a_aabb = a.AABB();
             for (int j = i + 1; j < keys.Length; j++)
             {
                 int keyB = keys[j];
-                SphereBody b = _bodies[keyB];
+                Body b = _bodies[keyB];
                 AABB b_aabb = b.AABB();
 
                 if (a.isStatic && b.isStatic) continue;
@@ -104,11 +104,11 @@ public struct World : System.IDisposable, IWorld
             float3 normal;
             float depth;
             (int, int) pair = _contactPairs[i];
-            SphereBody a = _bodies[pair.Item1];
-            SphereBody b = _bodies[pair.Item2];
+            Body a = _bodies[pair.Item1];
+            Body b = _bodies[pair.Item2];
             if (Collisions.Collide(a, b, out normal, out depth))
             {
-
+                Debug.Log("Collide");
                 if (a.isStatic)
                 {
                     b.Move(normal * depth * 1f);
@@ -148,7 +148,7 @@ public struct World : System.IDisposable, IWorld
         }
     }
 
-    void ResolveCollisionBasic(ref SphereBody a, ref SphereBody b, float3 normal, float depth)
+    void ResolveCollisionBasic(ref Body a, ref Body b, float3 normal, float depth)
     {
         float3 relVel = b.velocity - a.velocity;
         float restitution = Mathf.Min(a.restitution, b.restitution);
