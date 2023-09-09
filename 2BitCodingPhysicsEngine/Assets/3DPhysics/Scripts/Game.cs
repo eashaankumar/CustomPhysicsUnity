@@ -81,18 +81,11 @@ public class Game : MonoBehaviour
                 Gizmos.DrawSphere(vertex, 0.1f);
             }
 
-            float3[] normalsA = Collisions.GetSATNormals(PolyGonA); // 3
+            float3[] normalsA = Collisions.GetAxis(PolyGonA); // 3
             foreach (float3 normal in normalsA)
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawRay(body.position, normal);
-            }
-
-            float3[] edgesA = Collisions.GetEdges(PolyGonA);
-            foreach (float3 edge in edgesA)
-            {
-                Gizmos.color = Color.blue;
-                Gizmos.DrawRay(body.position, edge);
             }
         }
         keys.Dispose();

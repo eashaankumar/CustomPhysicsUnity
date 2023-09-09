@@ -35,31 +35,31 @@ public static class Collisions
             BoxVertices PolyGonB = new BoxVertices(b.position, b.size, b.rotation);
             float3[] verticesA = GetVertices(PolyGonA);
             float3[] verticesB = GetVertices(PolyGonB);
-            float3[] normalsA = GetSATNormals(PolyGonA); // 3
-            float3[] normalsB = GetSATNormals(PolyGonB); // 3
+            float3[] aAxes = GetAxis(PolyGonA); // 3
+            float3[] bAxes = GetAxis(PolyGonB); // 3
 
-            List<float3> axises = new List<float3>();
-            float3[] edgesA = GetEdges(PolyGonA);
-            float3[] edgesB = GetEdges(PolyGonB);
-            // 9
-            for (int i = 0; i < edgesA.Length; i++)
+            float3[] axises = new float3[]
             {
-                for(int j = 0; j < edgesB.Length; j++)
-                {
-                    float3 axis = math.cross(edgesA[i], edgesB[j]);
-                    axises.Add(axis);
-                }
-            }
+                aAxes[0],
+                aAxes[1],
+                aAxes[2],
+                bAxes[0],
+                bAxes[1],
+                bAxes[2],
+                math.cross(aAxes[0], bAxes[0]),
+                math.cross(aAxes[0], bAxes[1]),
+                math.cross(aAxes[0], bAxes[2]),
+                math.cross(aAxes[1], bAxes[0]),
+                math.cross(aAxes[1], bAxes[1]),
+                math.cross(aAxes[1], bAxes[2]),
+                math.cross(aAxes[2], bAxes[0]),
+                math.cross(aAxes[2], bAxes[1]),
+                math.cross(aAxes[2], bAxes[2])
+            };
 
-            /*float3[] z = new float3[normalsA.Length + normalsB.Length];
-            normalsA.CopyTo(z, 0);
-            normalsB.CopyTo(z, normalsA.Length);*/
-            axises.AddRange(normalsB);
-            axises.AddRange(normalsA);
-
-            if(axises.Count != 15)
+            if(axises.Length != 15)
             {
-                throw new System.Exception("Invalid number of axis for Box: " + axises.Count);
+                throw new System.Exception("Invalid number of axis for Box: " + axises.Length);
             }
 
             return Collisions.IntersectPolygons(verticesA, verticesB, a.position, b.position, axises, out normal, out depth);
@@ -67,14 +67,17 @@ public static class Collisions
         return false;
     }
 
-    public static bool IntersectPolygons(float3[] verticesA, float3[] verticesB, float3 centerA, float3 centerB, List<float3> allNormals, out float3 normal, out float depth)
+    public static bool IntersectPolygons(float3[] verticesA, float3[] verticesB, float3 centerA, float3 centerB, float3[] allNormals, out float3 normal, out float depth)
     {
         normal = float3.zero;
         depth = float.MaxValue;
-        for (int i = 0; i < allNormals.Count; i++)
+        for (int i = 0; i < allNormals.Length; i++)
         {
             float3 n = allNormals[i];
+            // Handles the cross product = {0,0,0} case
+            if (Utils.CloseEnough(n, float3.zero)) return true;
             n = math.normalize(n);
+
             MinMax minMaxA = Collisions.ProjectVerticesMinMax(n, verticesA);
             MinMax minMaxB = Collisions.ProjectVerticesMinMax(n, verticesB);
             if (minMaxA.min >= minMaxB.max || minMaxB.min > minMaxA.max)
@@ -89,9 +92,6 @@ public static class Collisions
                 normal = n;
             }
         }
-
-        //Vector2 centerA = GeometricCenter(verticesA);
-        //Vector2 centerB = GeometricCenter(verticesB);
 
         float3 direction = centerB - centerA;
         if (math.dot(direction, normal) < 0)
@@ -160,21 +160,11 @@ public static class Collisions
                               vertices.topLeftBack, vertices.topLeftFront, vertices.topRightBack, vertices.topRightFront};
     }
 
-    public static float3[] GetSATNormals(BoxVertices vertices)
+    public static float3[] GetAxis(BoxVertices vertices)
     {
         return new float3[]
         {
-            vertices.topN, vertices.rightN, vertices.frontN
-        };
-    }
-
-    public static float3[] GetEdges(BoxVertices bv)
-    {
-        return new float3[]
-        {
-            bv.bottomLeftFront - bv.bottomLeftBack,
-            bv.bottomRightBack - bv.bottomLeftBack,
-            bv.topLeftBack - bv.bottomLeftBack,
+            vertices.rightN, vertices.topN, vertices.frontN
         };
     }
 }
