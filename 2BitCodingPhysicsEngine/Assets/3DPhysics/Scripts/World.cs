@@ -44,6 +44,7 @@ public struct World : System.IDisposable, IWorld
         int before = _bodies.Count();
         float dtSub = dt / substeps;
         NativeArray<int> keys = _bodies.GetKeyArray(Allocator.Temp);
+        this._contactPointsList.Clear();
         for (int s = 0; s < substeps; s++)
         {
             StepBodiesNoRemove(dtSub, keys);
@@ -70,9 +71,7 @@ public struct World : System.IDisposable, IWorld
 
     void BroadPhase(NativeArray<int> keys)
     {
-        //this.contactList.Clear();
         _contactPairs.Clear();
-
         for (int i = 0; i < keys.Length - 1; i++)
         {
             int keyA = keys[i];
@@ -98,7 +97,6 @@ public struct World : System.IDisposable, IWorld
 
     void NarrowPhase()
     {
-        this._contactPointsList.Clear();
         for (int i = 0; i < _contactPairs.Length; i++)
         {
             float3 normal;
@@ -108,7 +106,6 @@ public struct World : System.IDisposable, IWorld
             Body b = _bodies[pair.Item2];
             if (Collisions.Collide(a, b, out normal, out depth))
             {
-                Debug.Log("Collide");
                 Vector3 direction = b.position - a.position;
                 if (Vector3.Dot(direction, normal) < 0)
                 {
@@ -130,7 +127,6 @@ public struct World : System.IDisposable, IWorld
 
                 NativeList<float3> contacts;
                 Collisions.FindContactPoints(a, b, out contacts);
-                CollisionManifold manifold = new CollisionManifold(pair.Item1, pair.Item2, normal, depth);
 
                 for(int c = 0; c < contacts.Length; c++)
                 {
@@ -138,7 +134,7 @@ public struct World : System.IDisposable, IWorld
                 }
                 contacts.Dispose();
                 
-                ResolveCollisionBasic(ref a, ref b, normal, depth);
+                //ResolveCollisionBasic(ref a, ref b, normal, depth);
 
                 _bodies[pair.Item1] = a;
                 _bodies[pair.Item2] = b;

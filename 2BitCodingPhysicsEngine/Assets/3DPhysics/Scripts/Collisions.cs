@@ -72,6 +72,14 @@ public static class Collisions
                 return true;
             }
         }
+        else if (a.type == BodyType.SPHERE && b.type == BodyType.BOX)
+        {
+            return Collisions.IntersectSpherePolygon(a.position, a.size.x, b.position, b.size, b.rotation, out normal, out depth);
+        }
+        else if (a.type == BodyType.BOX && b.type == BodyType.SPHERE)
+        {
+            return Collisions.IntersectSpherePolygon(b.position, b.size.x, a.position, a.size, a.rotation, out normal, out depth);
+        }
         return false;
     }
     /*public static bool IntersectPolygons2(float3[] verticesA, float3[] verticesB, float3 centerA, float3 centerB, float3[] allNormals, out float3 normal, out float depth)
@@ -136,6 +144,33 @@ public static class Collisions
         }
         return true; // A penetration has been found
     }*/
+    
+    public static bool IntersectSpherePolygon(float3 sphereCenter, float sphereRadius, float3 boxCenter, float3 boxSize, quaternion boxRot, out float3 normal, out float depth)
+    {
+        normal = float3.zero;
+        depth = 0;
+        float3 sphereCenterProjOnBox = Collisions.ClosestPointOnBox(boxCenter, boxRot, boxSize, sphereCenter, out float3 localPoint);
+        if (Utils.CloseEnough(sphereCenterProjOnBox, sphereCenter))
+        {
+            BoxVertices PolyGon = new BoxVertices(boxCenter, boxSize, boxRot);
+            float3[] cubeAxises = PolyGon.GetAllAxis();
+            Collisions.ClosestDirection(cubeAxises, sphereCenterProjOnBox - boxCenter, out int closestNormIndex);
+            if (closestNormIndex < 0) throw new System.Exception("No valid box face found");
+            normal = cubeAxises[closestNormIndex];
+            depth = sphereRadius;
+            return true;
+        }
+        float dis = math.length(sphereCenterProjOnBox - sphereCenter);
+        if (dis < sphereRadius)
+        {
+            normal = math.normalize(sphereCenterProjOnBox - sphereCenter);
+            depth = dis;
+            Debug.Log(sphereCenterProjOnBox - sphereCenter + " " + normal + " " + depth);
+            return true;
+        }
+        return false;
+    }
+
     public static bool IntersectPolygons(float3[] verticesA, float3[] verticesB, float3 centerA, float3 centerB, float3[] allNormals, out float3 normal, out float depth)
     {
         normal = float3.zero;
@@ -220,20 +255,27 @@ public static class Collisions
     public static void FindContactPoint(float3 cubeACenter, float3 cubeASize, quaternion cubeARot, float3[] verticesB, out List<float3> contacts)
     {
         contacts = new List<float3>();
-        float minDisSq = float.MaxValue;
+        List<(float3, float)> potentialContactPoint = new List<(float3, float)>();
+        //float minDisSq = float.MaxValue;
         foreach (float3 vertexB in verticesB)
         {
-            float3 closestPointToA = ClosestPointOnBox(cubeACenter, cubeARot, cubeASize, vertexB);
+            float3 closestPointToA = ClosestPointOnBox(cubeACenter, cubeARot, cubeASize, vertexB, out float3 localPoint);
             float disSq = math.lengthsq(closestPointToA - vertexB);
-            if (disSq < minDisSq)
+            potentialContactPoint.Add((closestPointToA, disSq));
+            /*if (disSq < minDisSq)
             {
                 minDisSq = disSq;
-                contacts.Insert(0, closestPointToA);
-                if (contacts.Count > 4) contacts.RemoveAt(contacts.Count - 1);
-            }
+                contacts.Add(closestPointToA);
+                //if (contacts.Count > 4) contacts.RemoveAt(contacts.Count - 1);
+            }*/
+        }
+        potentialContactPoint.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+        for(int i = 0; i < potentialContactPoint.Count; i++)
+        {
+            if (i > 4) break;
+            contacts.Add(potentialContactPoint[i].Item1);
         }
     }
-
 
     public static void FindContactPoint(float3 centerA, float radiusA, float3 centerB, out float3 cp)
     {
@@ -253,6 +295,22 @@ public static class Collisions
         return minMax;
     }
 
+    public static void ClosestDirection(float3[] directions, float3 normal, out int closestPlaneIndex)
+    {
+        normal = math.normalize(normal);
+        closestPlaneIndex = -1;
+        float minDotProd = float.MaxValue;
+        for (int i = 0; i < directions.Length; i++)
+        {
+            float dot = 1 - math.dot(math.normalize(directions[i]), normal);
+            if (dot < minDotProd)
+            {
+                minDotProd = dot;
+                closestPlaneIndex = i;
+            }
+        }
+    }
+
     public static float ClosestPointOnPlane(Plane plane, float3 point)
     {
         // https://gdbooks.gitbooks.io/3dcollisions/content/Chapter1/closest_point_on_plane.html
@@ -264,12 +322,14 @@ public static class Collisions
         return distance;
     }
 
-    public static float3 ClosestPointOnBox(float3 center, quaternion rot, float3 size, float3 point)
+    public static float3 ClosestPointOnBox(float3 center, quaternion rot, float3 size, float3 point, out float3 localPoint)
     {
-        float3 localPoint = Utils.WorldToLocal(center, rot, point);
+        localPoint = Utils.WorldToLocal(center, rot, point);
         localPoint.x = math.clamp(localPoint.x, -size.x / 2f, size.x / 2f);
         localPoint.y = math.clamp(localPoint.y, -size.y / 2f, size.y / 2f);
         localPoint.z = math.clamp(localPoint.z, -size.z / 2f, size.z / 2f);
+        //localFace = new float3(math.sign(localPoint.x), math.sign(localPoint.y), math.sign(localPoint.z));
+        
         return Utils.LocalToWorld(center, rot, localPoint);
     }
 }
@@ -353,6 +413,15 @@ public struct BoxVertices
         return new float3[]
         {
             rightN, topN, frontN
+        };
+    }
+
+    public float3[] GetAllAxis()
+    {
+        return new float3[]
+        {
+            rightN, topN, frontN,
+            -rightN, -topN, -frontN
         };
     }
 }
