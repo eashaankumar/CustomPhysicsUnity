@@ -70,7 +70,6 @@ public class Game : MonoBehaviour
             if (body.type == BodyType.SPHERE)
             {
                 sphereMatrices.Add(Matrix4x4.TRS(body.position, body.rotation, body.size * 2));
-                print(body.position + " " + body.rotation + " " + body.size);
             }
 
             if (body.type == BodyType.BOX)

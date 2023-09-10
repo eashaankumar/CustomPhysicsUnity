@@ -134,7 +134,7 @@ public struct World : System.IDisposable, IWorld
                 }
                 contacts.Dispose();
                 
-                //ResolveCollisionBasic(ref a, ref b, normal, depth);
+                ResolveCollisionBasic(ref a, ref b, normal, depth);
 
                 _bodies[pair.Item1] = a;
                 _bodies[pair.Item2] = b;

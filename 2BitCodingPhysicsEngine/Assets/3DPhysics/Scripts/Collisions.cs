@@ -164,7 +164,8 @@ public static class Collisions
         if (dis < sphereRadius)
         {
             normal = math.normalize(sphereCenterProjOnBox - sphereCenter);
-            depth = dis;
+            float3 offFromSphere = sphereCenter + normal * sphereRadius;
+            depth = math.distance(offFromSphere, sphereCenterProjOnBox);
             Debug.Log(sphereCenterProjOnBox - sphereCenter + " " + normal + " " + depth);
             return true;
         }
@@ -250,6 +251,21 @@ public static class Collisions
                 contacts.Add(contactsOnB[i]);
             }
         }
+        else if (a.type == BodyType.SPHERE && b.type == BodyType.BOX)
+        {
+            Collisions.FindContactPoint(b.position, b.size, b.rotation, a.position, a.size.x, out float3 cp);
+            contacts.Add(cp);
+        }
+        else if (a.type == BodyType.BOX && b.type == BodyType.SPHERE)
+        {
+            Collisions.FindContactPoint(a.position, a.size, a.rotation, b.position, b.size.x, out float3 cp);
+            contacts.Add(cp);
+        }
+    }
+
+    public static void FindContactPoint(float3 boxCenter, float3 boxSize, quaternion boxRot, float3 sphereCenter, float sphereRadius, out float3 cp)
+    {
+        cp = Collisions.ClosestPointOnBox(boxCenter, boxRot, boxSize, sphereCenter, out float3 localPoint);
     }
 
     public static void FindContactPoint(float3 cubeACenter, float3 cubeASize, quaternion cubeARot, float3[] verticesB, out List<float3> contacts)
