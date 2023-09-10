@@ -13,7 +13,7 @@ public interface IWorld
 public struct World : System.IDisposable, IWorld
 {
     internal NativeHashMap<int, Body> _bodies;
-    NativeList<float3> _contactPointsList;
+    internal NativeList<float3> _contactPointsList;
     NativeList<(int, int)> _contactPairs;
     Unity.Mathematics.Random _random;
     float3 _gravity;
@@ -71,7 +71,6 @@ public struct World : System.IDisposable, IWorld
     void BroadPhase(NativeArray<int> keys)
     {
         //this.contactList.Clear();
-        this._contactPointsList.Clear();
         _contactPairs.Clear();
 
         for (int i = 0; i < keys.Length - 1; i++)
@@ -99,6 +98,7 @@ public struct World : System.IDisposable, IWorld
 
     void NarrowPhase()
     {
+        this._contactPointsList.Clear();
         for (int i = 0; i < _contactPairs.Length; i++)
         {
             float3 normal;

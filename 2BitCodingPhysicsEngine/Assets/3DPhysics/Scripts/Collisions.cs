@@ -202,18 +202,34 @@ public static class Collisions
         else if (a.type == BodyType.BOX && b.type == BodyType.BOX)
         {
             BoxVertices abox = new BoxVertices(a.position, a.size, a.rotation);
-            Plane[] facesA = new Plane[] { };
-            Plane[] facesB = new Plane[] { };
+            BoxVertices bbox = new BoxVertices(b.position, b.size, b.rotation);
+            List<float3> contactsOnA, contactsOnB;
+            FindContactPoint(a.position, a.size, a.rotation, bbox.GetVertices(), out contactsOnA);
+            FindContactPoint(b.position, b.size, b.rotation, abox.GetVertices(), out contactsOnB);
+            for(int i = 0; i < contactsOnA.Count; i++)
+            {
+                contacts.Add(contactsOnA[i]);
+            }
+            for (int i = 0; i < contactsOnB.Count; i++)
+            {
+                contacts.Add(contactsOnB[i]);
+            }
         }
     }
 
-    public static void FindContactPoint(Plane[] facesA, float3[] verticesA, Plane[] facesB, float3[] verticesB, List<float3> contacts)
+    public static void FindContactPoint(float3 cubeACenter, float3 cubeASize, quaternion cubeARot, float3[] verticesB, out List<float3> contacts)
     {
-        foreach(Plane faceA in facesA)
+        contacts = new List<float3>();
+        float minDisSq = float.MaxValue;
+        foreach (float3 vertexB in verticesB)
         {
-            foreach(float3 vertexB in verticesB)
+            float3 closestPointToA = ClosestPointOnBox(cubeACenter, cubeARot, cubeASize, vertexB);
+            float disSq = math.lengthsq(closestPointToA - vertexB);
+            if (disSq < minDisSq)
             {
-                
+                minDisSq = disSq;
+                contacts.Insert(0, closestPointToA);
+                if (contacts.Count > 4) contacts.RemoveAt(contacts.Count - 1);
             }
         }
     }

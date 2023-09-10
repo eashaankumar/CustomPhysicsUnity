@@ -44,7 +44,7 @@ public class Game : MonoBehaviour
         }
 
         Body b = world._bodies[platformCubeId];
-        b.Rotate(new float3(1, 0, 0) * Time.deltaTime);
+        //b.Rotate(new float3(1, 0, 0) * Time.deltaTime);
         world._bodies[platformCubeId] = b;
 
         world.Tick(Time.deltaTime, substeps);
@@ -100,12 +100,18 @@ public class Game : MonoBehaviour
                 Gizmos.DrawRay(body.position, normal);
             }*/
 
-            float3 point = Camera.main.transform.position;
+            /*float3 point = Camera.main.transform.position;
             float3 closestPoint = Collisions.ClosestPointOnBox(body.position, body.rotation, body.size, point);
             Gizmos.color = Color.black;
-            Gizmos.DrawLine(point, closestPoint);
+            Gizmos.DrawLine(point, closestPoint);*/
         }
         keys.Dispose();
+
+        foreach(float3 contactPoint in world._contactPointsList)
+        {
+            Gizmos.color = Color.Lerp(Color.green, Color.white, 0.5f);
+            Gizmos.DrawSphere(contactPoint, 0.01f);
+        }
 
     }
 
