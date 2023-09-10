@@ -42,7 +42,7 @@ public class Game : MonoBehaviour
         }
         world.Tick(Time.deltaTime, substeps);
 
-        RenderWorld();
+        //RenderWorld();
     }
 
     void RenderWorld()
@@ -51,7 +51,7 @@ public class Game : MonoBehaviour
         NativeArray<int> keys = world._bodies.GetKeyArray(Allocator.Temp);
         List<Matrix4x4> sphereMatrices = new List<Matrix4x4>();
         List<Matrix4x4> boxMatrices = new List<Matrix4x4>();
-
+        List<Vector4> colors = new List<Vector4>();
         for (int i = 0; i < keys.Length; i++)
         {
             int key = keys[i];
@@ -61,8 +61,12 @@ public class Game : MonoBehaviour
 
             if (body.type == BodyType.BOX)
                 boxMatrices.Add(Matrix4x4.TRS(body.position, body.rotation, body.size));
+
+            colors.Add(body.color);
         }
-        Graphics.DrawMeshInstanced(sphereMesh, 0, material, sphereMatrices);
+        MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+        mpb.SetVectorArray("_Color", colors);
+        Graphics.DrawMeshInstanced(sphereMesh, 0, material, sphereMatrices, mpb);
         Graphics.DrawMeshInstanced(boxMesh, 0, material, boxMatrices);
         keys.Dispose();
     }
@@ -74,7 +78,7 @@ public class Game : MonoBehaviour
         {
             Body body = world._bodies[keys[i]];
             BoxVertices PolyGonA = new BoxVertices(body.position, body.size, body.rotation);
-            float3[] verticesA = Collisions.GetVertices(PolyGonA);
+            /*float3[] verticesA = Collisions.GetVertices(PolyGonA);
             foreach(float3 vertex in verticesA)
             {
                 Gizmos.color = Color.red;
@@ -86,6 +90,19 @@ public class Game : MonoBehaviour
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawRay(body.position, normal);
+            }*/
+            Gizmos.color = body.color;
+
+            if (body.type == BodyType.SPHERE)
+            {
+                Gizmos.matrix = (Matrix4x4.TRS(body.position, body.rotation, body.size * 2));
+                Gizmos.DrawSphere(Vector3.zero, body.size.x);
+            }
+
+            if (body.type == BodyType.BOX)
+            {
+                Gizmos.matrix = (Matrix4x4.TRS(body.position, body.rotation, body.size));
+                Gizmos.DrawCube(Vector3.zero, body.size);
             }
         }
         keys.Dispose();

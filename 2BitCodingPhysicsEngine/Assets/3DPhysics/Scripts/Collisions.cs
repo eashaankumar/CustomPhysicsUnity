@@ -38,6 +38,7 @@ public static class Collisions
             float3[] aAxes = GetAxis(PolyGonA); // 3
             float3[] bAxes = GetAxis(PolyGonB); // 3
 
+            // https://github.com/irixapps/Unity-Separating-Axis-SAT/blob/master/Assets/SeparatingAxisTest.cs
             float3[] axises = new float3[]
             {
                 aAxes[0],
@@ -62,11 +63,79 @@ public static class Collisions
                 throw new System.Exception("Invalid number of axis for Box: " + axises.Length);
             }
 
-            return Collisions.IntersectPolygons(verticesA, verticesB, a.position, b.position, axises, out normal, out depth);
+            if ( Collisions.IntersectPolygons(verticesA, verticesB, a.position, b.position, axises, out normal, out depth))
+            {
+                return true;
+            }
+            else if (Collisions.IntersectPolygons(verticesB, verticesA, b.position, a.position, axises, out normal, out depth))
+            {
+                return true;
+            }
         }
         return false;
     }
+    /*public static bool IntersectPolygons2(float3[] verticesA, float3[] verticesB, float3 centerA, float3 centerB, float3[] allNormals, out float3 normal, out float depth)
+    {
+        bool hasOverlap = true;
+        normal = float3.zero;
+        depth = float.PositiveInfinity;
+        for (int i = 0; i < allNormals.Length; i++)
+        {
+            float bProjMin = float.MaxValue, aProjMin = float.MaxValue;
+            float bProjMax = float.MinValue, aProjMax = float.MinValue;
+            float3 n = allNormals[i];
+            if (Utils.CloseEnough(n, float3.zero)) return true;
 
+            for (int j = 0; j < verticesB.Length; j++)
+            {
+                float val = FindScalarProjection((verticesB[j]), n);
+
+                if (val < bProjMin)
+                {
+                    bProjMin = val;
+                }
+
+                if (val > bProjMax)
+                {
+                    bProjMax = val;
+                }
+            }
+
+            for (int j = 0; j < verticesA.Length; j++)
+            {
+                float val = FindScalarProjection((verticesA[j]), n);
+
+                if (val < aProjMin)
+                {
+                    aProjMin = val;
+                }
+
+                if (val > aProjMax)
+                {
+                    aProjMax = val;
+                }
+            }
+
+            float overlap = FindOverlap(aProjMin, aProjMax, bProjMin, bProjMax);
+
+            if (overlap < minOverlap)
+            {
+                minOverlap = overlap;
+                minOverlapAxis = axis;
+
+                penetrationAxes.Add(axis);
+                penetrationAxesDistance.Add(overlap);
+
+            }
+
+            if (overlap <= 0)
+            {
+                // Separating Axis Found Early Out
+                return false;
+            }
+        }
+        return true; // A penetration has been found
+    }*/
     public static bool IntersectPolygons(float3[] verticesA, float3[] verticesB, float3 centerA, float3 centerB, float3[] allNormals, out float3 normal, out float depth)
     {
         normal = float3.zero;

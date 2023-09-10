@@ -26,6 +26,8 @@ public struct Body: IBody
     public float3 angularVelocityRadians;
     public float3 force;
 
+    public Color color;
+
     public readonly float mass;
     public readonly float invMass;
     public readonly float density;
@@ -95,6 +97,8 @@ public struct Body: IBody
             throw new System.InvalidOperationException("");
         }
         inverseInertia = math.inverse(inertia);
+        Color c = UnityEngine.Random.ColorHSV();
+        color = c;
     }
 
     public void Step(float dt)

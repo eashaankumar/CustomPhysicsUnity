@@ -109,6 +109,11 @@ public struct World : System.IDisposable, IWorld
             if (Collisions.Collide(a, b, out normal, out depth))
             {
                 Debug.Log("Collide");
+                Vector3 direction = b.position - a.position;
+                if (Vector3.Dot(direction, normal) < 0)
+                {
+                    normal = -normal;
+                }
                 if (a.isStatic)
                 {
                     b.Move(normal * depth * 1f);
@@ -126,18 +131,13 @@ public struct World : System.IDisposable, IWorld
                 NativeList<float3> contacts;
                 Collisions.FindContactPoints(a, b, out contacts);
                 CollisionManifold manifold = new CollisionManifold(pair.Item1, pair.Item2, normal, depth);
-                //this._contactList.Add(manifold);
 
                 for(int c = 0; c < contacts.Length; c++)
                 {
                     _contactPointsList.Add(contacts[c]);
                 }
                 contacts.Dispose();
-
-                //a.OnCollision(b);
-                //b.OnCollision(a);
-
-                //ResolveCollisionWithRotationAndFriction(in manifold);
+                
                 ResolveCollisionBasic(ref a, ref b, normal, depth);
 
                 _bodies[pair.Item1] = a;
