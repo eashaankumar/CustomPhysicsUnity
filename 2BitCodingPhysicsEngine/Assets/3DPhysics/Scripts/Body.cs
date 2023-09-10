@@ -107,7 +107,7 @@ public struct Body: IBody
         {
             this.velocity += this.force / this.mass * dt;
             this.position += this.velocity * dt;
-            this.rotation = math.mul(this.rotation, quaternion.EulerZXY(this.angularVelocityRadians * dt));
+            Rotate(this.angularVelocityRadians * dt);
         }
         else
         {
@@ -115,6 +115,12 @@ public struct Body: IBody
             this.angularVelocityRadians = 0;
         }
         this.force = float3.zero;
+    }
+
+    public void Rotate(float3 euler)
+    {
+        this.rotation = math.mul(this.rotation, quaternion.EulerZXY(euler));
+
     }
 
     public void Move(float3 amt)

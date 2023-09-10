@@ -17,4 +17,13 @@ public struct Utils
         return math.distancesq(a, b) < 1e-5f;
     }
 
+    public static float3 WorldToLocal(float3 transformPos, quaternion transformRot, float3 worldPoint)
+    {
+        return math.mul(math.inverse(transformRot), (worldPoint - transformPos));
+    }
+
+    public static float3 LocalToWorld(float3 transformPos, quaternion transformRot, float3 localPoint)
+    {
+        return math.mul(transformRot, localPoint) + transformPos;
+    }
 }

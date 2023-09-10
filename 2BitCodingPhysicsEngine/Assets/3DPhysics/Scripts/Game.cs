@@ -20,12 +20,14 @@ public class Game : MonoBehaviour
 
     World world;
 
+    int platformCubeId;
+
     Unity.Mathematics.Random random;
     // Start is called before the first frame update
     void Awake()
     {
         world = new World(Allocator.Persistent, 1000000, 1244243, gravity);
-        world.AddBody(new Body(BodyType.BOX, 20, true, 1, 0.5f, 0.1f, 0.5f), out int id);
+        world.AddBody(new Body(BodyType.BOX, 20, true, 1, 0.5f, 0.1f, 0.5f), out platformCubeId);
         random = new Unity.Mathematics.Random(1234145);
     }
 
@@ -40,6 +42,11 @@ public class Game : MonoBehaviour
         {
             AddBox(Camera.main.ScreenToWorldPoint(Input.mousePosition), Quaternion.identity, math.abs(random.NextFloat3()));
         }
+
+        Body b = world._bodies[platformCubeId];
+        b.Rotate(new float3(1, 0, 0) * Time.deltaTime);
+        world._bodies[platformCubeId] = b;
+
         world.Tick(Time.deltaTime, substeps);
 
         RenderWorld();
@@ -71,14 +78,15 @@ public class Game : MonoBehaviour
         keys.Dispose();
     }
 
-    /*private void OnDrawGizmos()
+    private void OnDrawGizmos()
     {
         NativeArray<int> keys = world._bodies.GetKeyArray(Allocator.Temp);
         for (int i = 0; i < keys.Length; i++)
         {
             Body body = world._bodies[keys[i]];
             BoxVertices PolyGonA = new BoxVertices(body.position, body.size, body.rotation);
-            float3[] verticesA = Collisions.GetVertices(PolyGonA);
+
+            /*float3[] verticesA = Collisions.GetVertices(PolyGonA);
             foreach(float3 vertex in verticesA)
             {
                 Gizmos.color = Color.red;
@@ -90,24 +98,16 @@ public class Game : MonoBehaviour
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawRay(body.position, normal);
-            }
-            Gizmos.color = body.color;
+            }*/
 
-            if (body.type == BodyType.SPHERE)
-            {
-                Gizmos.matrix = (Matrix4x4.TRS(body.position, body.rotation, body.size * 2));
-                Gizmos.DrawSphere(Vector3.zero, 1);
-            }
-
-            if (body.type == BodyType.BOX)
-            {
-                Gizmos.matrix = (Matrix4x4.TRS(body.position, body.rotation, body.size));
-                Gizmos.DrawCube(Vector3.zero, Vector3.one);
-            }
+            float3 point = Camera.main.transform.position;
+            float3 closestPoint = Collisions.ClosestPointOnBox(body.position, body.rotation, body.size, point);
+            Gizmos.color = Color.black;
+            Gizmos.DrawLine(point, closestPoint);
         }
         keys.Dispose();
 
-    }*/
+    }
 
     int AddSphere(Vector3 positions, Quaternion rotation, float radius)
     {

@@ -209,8 +209,16 @@ public static class Collisions
 
     public static void FindContactPoint(Plane[] facesA, float3[] verticesA, Plane[] facesB, float3[] verticesB, List<float3> contacts)
     {
-        
+        foreach(Plane faceA in facesA)
+        {
+            foreach(float3 vertexB in verticesB)
+            {
+                
+            }
+        }
     }
+
+
     public static void FindContactPoint(float3 centerA, float radiusA, float3 centerB, out float3 cp)
     {
         float3 ab = math.normalize(centerB - centerA);
@@ -227,6 +235,26 @@ public static class Collisions
             if (proj > minMax.max) minMax.max = proj;
         }
         return minMax;
+    }
+
+    public static float ClosestPointOnPlane(Plane plane, float3 point)
+    {
+        // https://gdbooks.gitbooks.io/3dcollisions/content/Chapter1/closest_point_on_plane.html
+        // This works assuming plane.Normal is normalized, which it should be
+        float distance = math.dot(plane.normal, point) - math.length(plane.center);
+        // If the plane normal wasn't normalized, we'd need this:
+        // distance = distance / DOT(plane.Normal, plane.Normal);
+
+        return distance;
+    }
+
+    public static float3 ClosestPointOnBox(float3 center, quaternion rot, float3 size, float3 point)
+    {
+        float3 localPoint = Utils.WorldToLocal(center, rot, point);
+        localPoint.x = math.clamp(localPoint.x, -size.x / 2f, size.x / 2f);
+        localPoint.y = math.clamp(localPoint.y, -size.y / 2f, size.y / 2f);
+        localPoint.z = math.clamp(localPoint.z, -size.z / 2f, size.z / 2f);
+        return Utils.LocalToWorld(center, rot, localPoint);
     }
 }
 
@@ -344,6 +372,6 @@ public struct Plane
     {
         center = _center;
         size = _size;
-        normal = _normal;
+        normal = math.normalize(_normal);
     }
 }
