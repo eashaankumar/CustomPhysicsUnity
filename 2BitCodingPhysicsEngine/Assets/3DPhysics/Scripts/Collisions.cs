@@ -33,10 +33,10 @@ public static class Collisions
         {
             BoxVertices PolyGonA = new BoxVertices(a.position, a.size, a.rotation);
             BoxVertices PolyGonB = new BoxVertices(b.position, b.size, b.rotation);
-            float3[] verticesA = GetVertices(PolyGonA);
-            float3[] verticesB = GetVertices(PolyGonB);
-            float3[] aAxes = GetAxis(PolyGonA); // 3
-            float3[] bAxes = GetAxis(PolyGonB); // 3
+            float3[] verticesA = PolyGonA.GetVertices();
+            float3[] verticesB = PolyGonB.GetVertices();
+            float3[] aAxes = PolyGonA.GetAxis(); // 3
+            float3[] bAxes = PolyGonB.GetAxis(); // 3 
 
             // https://github.com/irixapps/Unity-Separating-Axis-SAT/blob/master/Assets/SeparatingAxisTest.cs
             float3[] axises = new float3[]
@@ -201,10 +201,16 @@ public static class Collisions
         }
         else if (a.type == BodyType.BOX && b.type == BodyType.BOX)
         {
-
+            BoxVertices abox = new BoxVertices(a.position, a.size, a.rotation);
+            Plane[] facesA = new Plane[] { };
+            Plane[] facesB = new Plane[] { };
         }
     }
 
+    public static void FindContactPoint(Plane[] facesA, float3[] verticesA, Plane[] facesB, float3[] verticesB, List<float3> contacts)
+    {
+        
+    }
     public static void FindContactPoint(float3 centerA, float radiusA, float3 centerB, out float3 cp)
     {
         float3 ab = math.normalize(centerB - centerA);
@@ -221,20 +227,6 @@ public static class Collisions
             if (proj > minMax.max) minMax.max = proj;
         }
         return minMax;
-    }
-
-    public static float3[] GetVertices(BoxVertices vertices)
-    {
-        return new float3[] { vertices.bottomLeftBack, vertices.bottomLeftFront, vertices.bottomRightBack, vertices.bottomRightFront,
-                              vertices.topLeftBack, vertices.topLeftFront, vertices.topRightBack, vertices.topRightFront};
-    }
-
-    public static float3[] GetAxis(BoxVertices vertices)
-    {
-        return new float3[]
-        {
-            vertices.rightN, vertices.topN, vertices.frontN
-        };
     }
 }
 
@@ -268,6 +260,8 @@ public struct BoxVertices
 
     public readonly float3 topN, rightN, frontN;
 
+    public readonly Plane topP, bottomP, leftP, rightP, frontP, backP;
+
     public BoxVertices(float3 _center, float3 _size, quaternion _rot)
     {
         this.center = _center;
@@ -295,5 +289,61 @@ public struct BoxVertices
         this.topRightBack += _center;
         this.topRightFront += _center;
 
+        this.topP = new Plane(center + topN * _size.y / 2, _size.xz, topN);
+        this.bottomP = new Plane(center - topN * _size.y / 2, _size.xz, -topN);
+        this.rightP = new Plane(center + rightN * _size.x / 2, _size.yz, rightN);
+        this.leftP = new Plane(center - rightN * _size.x / 2, _size.yz, -rightN);
+        this.frontP = new Plane(center + frontN * _size.z / 2, _size.xy, frontN);
+        this.backP = new Plane(center - frontN * _size.z / 2, _size.xy, -frontN);
+
+    }
+
+    public float3[] GetVertices()
+    {
+        return new float3[] { bottomLeftBack, bottomLeftFront, bottomRightBack, bottomRightFront,
+                              topLeftBack, topLeftFront, topRightBack, topRightFront};
+    }
+
+    public float3[] GetAxis()
+    {
+        return new float3[]
+        {
+            rightN, topN, frontN
+        };
+    }
+}
+
+public struct Triangle
+{
+    public readonly float3 a;
+    public readonly float3 b;
+    public readonly float3 c;
+    public readonly float3 ab;
+    public readonly float3 ac;
+
+    public readonly float3 normal;
+    public Triangle(float3 _a, float3 _b, float3 _c)
+    {
+        a = _a;
+        b = _b;
+        c = _c;
+
+        ab = b - a;
+        ac = c - a;
+        normal = math.normalize(math.cross(math.normalize(ab), math.normalize(ac)));
+    }
+}
+
+public struct Plane
+{
+    public readonly float3 center;
+    public readonly float2 size;
+    public readonly float3 normal;
+
+    public Plane(float3 _center, float2 _size, float3 _normal)
+    {
+        center = _center;
+        size = _size;
+        normal = _normal;
     }
 }

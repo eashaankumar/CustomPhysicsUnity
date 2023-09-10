@@ -42,7 +42,7 @@ public class Game : MonoBehaviour
         }
         world.Tick(Time.deltaTime, substeps);
 
-        //RenderWorld();
+        RenderWorld();
     }
 
     void RenderWorld()
@@ -65,20 +65,20 @@ public class Game : MonoBehaviour
             colors.Add(body.color);
         }
         MaterialPropertyBlock mpb = new MaterialPropertyBlock();
-        mpb.SetVectorArray("_Color", colors);
+        mpb.SetVectorArray("_Colors", colors);
         Graphics.DrawMeshInstanced(sphereMesh, 0, material, sphereMatrices, mpb);
-        Graphics.DrawMeshInstanced(boxMesh, 0, material, boxMatrices);
+        Graphics.DrawMeshInstanced(boxMesh, 0, material, boxMatrices, mpb);
         keys.Dispose();
     }
 
-    private void OnDrawGizmos()
+    /*private void OnDrawGizmos()
     {
         NativeArray<int> keys = world._bodies.GetKeyArray(Allocator.Temp);
         for (int i = 0; i < keys.Length; i++)
         {
             Body body = world._bodies[keys[i]];
             BoxVertices PolyGonA = new BoxVertices(body.position, body.size, body.rotation);
-            /*float3[] verticesA = Collisions.GetVertices(PolyGonA);
+            float3[] verticesA = Collisions.GetVertices(PolyGonA);
             foreach(float3 vertex in verticesA)
             {
                 Gizmos.color = Color.red;
@@ -90,24 +90,24 @@ public class Game : MonoBehaviour
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawRay(body.position, normal);
-            }*/
+            }
             Gizmos.color = body.color;
 
             if (body.type == BodyType.SPHERE)
             {
                 Gizmos.matrix = (Matrix4x4.TRS(body.position, body.rotation, body.size * 2));
-                Gizmos.DrawSphere(Vector3.zero, body.size.x);
+                Gizmos.DrawSphere(Vector3.zero, 1);
             }
 
             if (body.type == BodyType.BOX)
             {
                 Gizmos.matrix = (Matrix4x4.TRS(body.position, body.rotation, body.size));
-                Gizmos.DrawCube(Vector3.zero, body.size);
+                Gizmos.DrawCube(Vector3.zero, Vector3.one);
             }
         }
         keys.Dispose();
 
-    }
+    }*/
 
     int AddSphere(Vector3 positions, Quaternion rotation, float radius)
     {
